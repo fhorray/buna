@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --cwd apps/playground dev",
+    "dev": "bun run turbo dev",
     "build": "bun run --cwd apps/playground build",
     "preview": "bun run --cwd apps/playground preview",
     "deploy": "bun run --cwd apps/playground deploy",

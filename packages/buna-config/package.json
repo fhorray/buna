@@ -1,0 +1,26 @@
+{
+  "name": "@buna/config",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": "./src/vite.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@buna/vite-plugin": "workspace:*",
+    "@cloudflare/vite-plugin": "^1.2.3",
+    "@tailwindcss/vite": "^4.1.17",
+    "vite-ssr-components": "^0.5.1"
+  },
+  "peerDependencies": {
+    "hono": "^4.0.0",
+    "vite": "^7.2.4",
+    "@hono/vite-dev-server": "^0.23.0"
+  }
+}
