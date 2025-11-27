@@ -1,6 +1,6 @@
 import type { FC } from 'hono/jsx';
 import { jsxRenderer } from 'hono/jsx-renderer';
-import { Script, ViteClient } from 'vite-ssr-components/hono';
+import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
 
 // 1) Extend ContextRenderer to accept extras props
 declare module 'hono' {
@@ -23,7 +23,7 @@ export const renderer = jsxRenderer(
           <ViteClient />
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width,initial-scale=1" />
-          <Script src="/src/style.css" />
+          <Link href="/src/style.css" rel="stylesheet" />
           <Script src="/src/client.tsx" />
           <title>{title ?? 'Hono + Vite + Nano Stores'}</title>
         </head>
