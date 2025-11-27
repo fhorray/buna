@@ -6,18 +6,22 @@
     "strict": true,
     "skipLibCheck": true,
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM",
     ],
-    "types": ["vite/client"],
+    "types": [
+      "vite/client",
+      "hono/jsx"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "allowImportingTsExtensions":true,
+    "allowImportingTsExtensions": true,
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "#router": ["./.buna/client-routes.generated.ts"],
       "#hono-app": ["./.buna/hono-routes.generated.tsx"],
-      "@/*": ["./*"] 
-    },
-  },
+      "@/*": ["./*"]
+    }
+  }
 }

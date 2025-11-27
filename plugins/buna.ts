@@ -1,19 +1,43 @@
-// scripts/vite-auto-routes.ts
+// scripts/vite-buna.ts
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin } from 'vite'
 
-const ROUTES_DIR = 'src/routes'
-
-// aqui você escolhe onde quer cachear:
-const OUTPUT_FRONT = '.buna/client-routes.generated.ts'
-const OUTPUT_HONO = '.buna/hono-routes.generated.tsx'
+const DEFAULT_ROUTES_DIR = 'src/routes'
+const DEFAULT_OUTPUT_FRONT = '.buna/client-routes.generated.ts'
+// const DEFAULT_OUTPUT_HONO = '.buna/hono-routes.generated.tsx'
 
 type RouteEntry = {
   name: string
   pattern: string
   importPath: string
   importName: string
+}
+
+type BunaOptions = {
+  /**
+   * Relative path (from project root) to the routes directory
+   * Example: 'src/routes'
+   */
+  routesDir?: string
+
+  /**
+   * Relative path (from project root) to the generated client routes file
+   * Example: '.buna/client-routes.generated.ts'
+   */
+  outputFile?: string
+
+  /**
+   * Relative path (from project root) to the generated Hono routes file
+   * Example: '.buna/hono-routes.generated.tsx'
+   */
+  // outputHono?: string
+}
+
+type ResolvedBunaOptions = {
+  routesDir: string
+  outputFile: string
+  // outputHono: string
 }
 
 function walkRoutesDir(rootDir: string): string[] {
@@ -34,7 +58,12 @@ function walkRoutesDir(rootDir: string): string[] {
   return result
 }
 
-function toRouteEntry(rootDir: string, filePath: string, projectRoot: string): RouteEntry | null {
+function toRouteEntry(
+  rootDir: string,
+  filePath: string,
+  projectRoot: string,
+  outputFile: string
+): RouteEntry | null {
   const relFromRoutes = path
     .relative(rootDir, filePath)
     .replace(/\\/g, '/')
@@ -84,8 +113,8 @@ function toRouteEntry(rootDir: string, filePath: string, projectRoot: string): R
       .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : ''))
       .join('')
 
-  // caminho de import relativo ao arquivo gerado do FRONT (OUTPUT_FRONT)
-  const outputDir = path.dirname(path.resolve(projectRoot, OUTPUT_FRONT))
+  // import path relative to FRONT generated file (outputFile)
+  const outputDir = path.dirname(path.resolve(projectRoot, outputFile))
   const absFilePath = path.resolve(filePath)
   let importPath = path.relative(outputDir, absFilePath).replace(/\\/g, '/')
   if (!importPath.startsWith('.')) {
@@ -106,11 +135,11 @@ function writeFileSafe(projectRoot: string, relPath: string, content: string) {
   fs.writeFileSync(fullPath, content, 'utf8')
 }
 
-function generateFiles(projectRoot: string) {
-  const routesDir = path.resolve(projectRoot, ROUTES_DIR)
+function generateFiles(projectRoot: string, opts: ResolvedBunaOptions) {
+  const routesDir = path.resolve(projectRoot, opts.routesDir)
 
   if (!fs.existsSync(routesDir)) {
-    console.warn(`[auto-routes] Routes dir not found: ${routesDir}`)
+    console.warn(`[buna] Routes dir not found: ${routesDir}`)
     return
   }
 
@@ -118,7 +147,7 @@ function generateFiles(projectRoot: string) {
   const entries: RouteEntry[] = []
 
   for (const file of files) {
-    const entry = toRouteEntry(routesDir, path.resolve(file), projectRoot)
+    const entry = toRouteEntry(routesDir, path.resolve(file), projectRoot, opts.outputFile)
     if (entry) entries.push(entry)
   }
 
@@ -144,6 +173,7 @@ function generateFiles(projectRoot: string) {
   frontLines.push('')
   frontLines.push('export const $router = createRouter(routes)')
   frontLines.push('')
+  frontLines.push('export type RoutingKeys = keyof typeof routeComponents')
 
   // HONO
   const honoLines: string[] = []
@@ -164,34 +194,40 @@ function generateFiles(projectRoot: string) {
   honoLines.push('export default app')
   honoLines.push('')
 
-  writeFileSafe(projectRoot, OUTPUT_FRONT, frontLines.join('\n'))
-  writeFileSafe(projectRoot, OUTPUT_HONO, honoLines.join('\n'))
+  writeFileSafe(projectRoot, opts.outputFile, frontLines.join('\n'))
+  // writeFileSafe(projectRoot, opts.outputHono, honoLines.join('\n'))
 
-  console.log(
-    `[auto-routes] Generated ${OUTPUT_FRONT} and ${OUTPUT_HONO} (${entries.length} routes).`
-  )
+  // console.log(
+  //   `[buna] Generated ${opts.outputFile} and ${opts.outputHono} (${entries.length} routes).`
+  // )
 }
 
-export function buna(): Plugin {
+export function buna(options: BunaOptions = {}): Plugin {
   let root = process.cwd()
 
+  const resolved: ResolvedBunaOptions = {
+    routesDir: options.routesDir ?? DEFAULT_ROUTES_DIR,
+    outputFile: options.outputFile ?? DEFAULT_OUTPUT_FRONT,
+    // outputHono: options.outputHono ?? DEFAULT_OUTPUT_HONO,
+  }
+
   return {
-    name: 'auto-routes-plugin',
+    name: 'buna-plugin',
 
     configResolved(config) {
       root = config.root
     },
 
     buildStart() {
-      generateFiles(root)
+      generateFiles(root, resolved)
     },
 
     configureServer(server) {
-      const watchDir = path.resolve(root, ROUTES_DIR)
+      const watchDir = path.resolve(root, resolved.routesDir)
 
       const maybeGenerate = (file: string) => {
         if (file.startsWith(watchDir)) {
-          generateFiles(root)
+          generateFiles(root, resolved)
         }
       }
 
