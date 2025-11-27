@@ -1,0 +1,26 @@
+{
+  "name": "hono-vite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "$npm_execpath run build && vite preview",
+    "deploy": "$npm_execpath run build && wrangler deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "@nanostores/react": "^1.0.0",
+    "@nanostores/router": "^1.0.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "hono": "^4.10.7",
+    "nanostores": "^1.1.0",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.2.3",
+    "@types/node": "^24.10.1",
+    "vite": "^6.3.5",
+    "vite-ssr-components": "^0.5.1",
+    "wrangler": "^4.17.0"
+  }
+}
