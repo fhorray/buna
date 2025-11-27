@@ -22,7 +22,8 @@
     "@buna/cli": "workspace:*",
     "@buna/config": "workspace:*",
     "@types/node": "^24.10.1",
-    "vite": "^6.3.5",
-    "wrangler": "^4.17.0"
+    "vite": "^7.2.4",
+    "wrangler": "^4.17.0",
+    "vite-ssr-components": "^0.5.1"
   }
 }

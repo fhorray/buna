@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'hono/jsx';
 import { hydrateRoot } from 'hono/jsx/dom/client';
-import { RouterView } from './renderer';
 import NotFound from './routes/_not-found';
 import { $router, routeComponents, RoutingKeys } from '#router';
+import { RouterView } from './server';
 
 type RouterState = ReturnType<typeof $router.get>;
 
