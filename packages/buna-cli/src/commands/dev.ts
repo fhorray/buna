@@ -6,7 +6,6 @@ export async function dev() {
 
   const child = spawn('vite', ['--config', '.buna/vite.config.ts'], {
     stdio: 'inherit',
-    shell: true,
   })
 
   child.on('exit', (code) => {
