@@ -1,6 +1,8 @@
 # prod
 dist/
 dist-server/
+apps/*/dist/
+apps/*/dist-server/
 
 # dev
 .yarn/
@@ -35,3 +37,6 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# turborepo
+.turbo

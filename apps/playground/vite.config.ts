@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import ssrPlugin from 'vite-ssr-components/plugin'
 import tailwindcss from '@tailwindcss/vite'
-import { buna } from './plugins/buna'
+import { buna } from '@buna/vite-plugin'
 import { resolve } from 'node:path'
 
 export default defineConfig({
@@ -11,7 +11,7 @@ export default defineConfig({
     alias: {
       '#router': resolve(__dirname, '.buna/client-routes.generated.ts'),
       '#hono-app': resolve(__dirname, '.buna/hono-routes.generated.tsx'),
-      '@': resolve(__dirname, '.')
+      '@': resolve(__dirname, 'src')
     },
   },
 })

@@ -1,4 +1,4 @@
-import { createRouteComponent } from '@/plugins/create-component';
+import { createRouteComponent } from '@buna/router';
 
 type PostProps = {
   id: string;

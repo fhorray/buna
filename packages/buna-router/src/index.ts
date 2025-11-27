@@ -1,7 +1,7 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-export type RouteParams = Record<string, string>;
-export type RouteSearch = Record<string, string>;
+export type RouteParams = Record<string, string>
+export type RouteSearch = Record<string, string>
 
 /**
  * Base props for any route component.
@@ -13,15 +13,15 @@ export type RouteComponentProps<
   P extends RouteParams = RouteParams,
   S extends object = {},
 > = {
-  c?: Context; // optional: Hono context (only available on server-side)
-  params: P; // route params, always string
-  search?: RouteSearch; // URL search params (querystring)
-  hash?: string; // URL hash, e.g. "#section1"
-} & S;
+  c?: Context // optional: Hono context (only available on server-side)
+  params: P // route params, always string
+  search?: RouteSearch // URL search params (querystring)
+  hash?: string // URL hash, e.g. "#section1"
+} & S
 
 type AnyRouteComponent<P extends RouteParams, S extends object> = (
-  props: RouteComponentProps<P, S>,
-) => any;
+  props: RouteComponentProps<P, S>
+) => any
 
 /**
  * Helper to create strongly-typed route components.
@@ -35,5 +35,5 @@ export function createRouteComponent<
   S extends object = {},
 >(component: AnyRouteComponent<P, S>): AnyRouteComponent<P, S> {
   // We just coerce the type so TS always sees a valid component signature
-  return component as AnyRouteComponent<P, S>;
+  return component as AnyRouteComponent<P, S>
 }

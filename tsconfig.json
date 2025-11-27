@@ -1,27 +1,7 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": [
-      "ESNext",
-      "DOM",
-    ],
-    "types": [
-      "vite/client",
-      "hono/jsx"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "#router": ["./.buna/client-routes.generated.ts"],
-      "#hono-app": ["./.buna/hono-routes.generated.tsx"],
-      "@/*": ["./*"]
-    }
-  }
+    "baseUrl": "."
+  },
+  "include": ["packages/**/*"]
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'hono/jsx';
 import { $router } from '#router';
-import { createRouteComponent } from '@/plugins/create-component';
+import { createRouteComponent } from '@buna/router';
 
 export default createRouteComponent(function Team({ params }) {
   return (

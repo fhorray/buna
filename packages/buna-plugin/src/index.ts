@@ -1,4 +1,3 @@
-// scripts/vite-buna.ts
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin } from 'vite'
@@ -7,14 +6,14 @@ const DEFAULT_ROUTES_DIR = 'src/routes'
 const DEFAULT_OUTPUT_FRONT = '.buna/client-routes.generated.ts'
 // const DEFAULT_OUTPUT_HONO = '.buna/hono-routes.generated.tsx'
 
-type RouteEntry = {
+export type RouteEntry = {
   name: string
   pattern: string
   importPath: string
   importName: string
 }
 
-type BunaOptions = {
+export type BunaOptions = {
   /**
    * Relative path (from project root) to the routes directory
    * Example: 'src/routes'
@@ -98,13 +97,13 @@ function toRouteEntry(
     effectiveSegments.length === 0
       ? 'home'
       : effectiveSegments
-        .map((seg) =>
-          seg
-            .replace(/^\[|\]$/g, '')
-            .replace(/\?/g, '')
-            .replace(/[^a-zA-Z0-9]+/g, '_')
-        )
-        .join('_')
+          .map((seg) =>
+            seg
+              .replace(/^\[|\]$/g, '')
+              .replace(/\?/g, '')
+              .replace(/[^a-zA-Z0-9]+/g, '_')
+          )
+          .join('_')
 
   const importName =
     'Route_' +
@@ -196,10 +195,6 @@ function generateFiles(projectRoot: string, opts: ResolvedBunaOptions) {
 
   writeFileSafe(projectRoot, opts.outputFile, frontLines.join('\n'))
   // writeFileSafe(projectRoot, opts.outputHono, honoLines.join('\n'))
-
-  // console.log(
-  //   `[buna] Generated ${opts.outputFile} and ${opts.outputHono} (${entries.length} routes).`
-  // )
 }
 
 export function buna(options: BunaOptions = {}): Plugin {

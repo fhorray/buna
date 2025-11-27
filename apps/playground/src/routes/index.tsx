@@ -1,4 +1,4 @@
-import { createRouteComponent } from '@/plugins/create-component';
+import { createRouteComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
 export default createRouteComponent(() => {
