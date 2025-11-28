@@ -1,22 +1,41 @@
-import { useEffect, useState } from 'hono/jsx';
-import { $router } from '#router';
 import { createRouteComponent } from '@buna/router';
 
-export default createRouteComponent(function Team({ params }) {
-  return (
-    <div className="text-red-500">
-      <h1>About</h1>
-      <pre>router state: {JSON.stringify($router.get(), null, 2)}</pre>
-      <button
-        className="bg-white border-2 border-blue-400 p-4 px-6"
-        onClick={(e) => {
-          console.log('AQUI');
-          e.preventDefault();
-          $router.open('/team');
-        }}
-      >
-        Team
-      </button>
-    </div>
-  );
-});
+type AboutParams = {}; // sem params dinâmicos
+type AboutSearch = {}; // sem query específica
+
+const AboutPage = createRouteComponent<AboutParams, AboutSearch>(
+  ({ params, search, hash, c }) => {
+    // Here you have:
+    // - params: AboutParams
+    // - search: AboutSearch
+    // - hash: string
+    // - c?: Context (Hono) quando vier do SSR
+
+    return (
+      <section>
+        <h1>About</h1>
+        <p>This is the about page.</p>
+        <span>{JSON.stringify(params)}</span>
+        <span>{JSON.stringify(search)}</span>
+        {/* <span>{JSON.stringify(c)}</span> */}
+      </section>
+    );
+  },
+);
+
+// AboutPage.meta = {
+//   title: 'About – Buna Playground',
+//   description: 'Learn more about the Buna framework and playground.',
+//   keywords: ['buna', 'framework', 'about'],
+// };
+
+AboutPage.meta = ({ params }) => {
+  console.log({ params });
+  return {
+    title: 'About – Buna Playground',
+    description: 'Learn more about the Buna framework and playground.',
+    keywords: ['buna', 'framework', 'about'],
+  };
+};
+
+export default AboutPage;

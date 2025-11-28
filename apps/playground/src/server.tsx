@@ -1,27 +1,23 @@
+// apps/playground/src/server.tsx
 import { Hono } from 'hono';
-
-import NotFound from './routes/_not-found';
-import { routes, routeComponents, RoutingKeys, $router } from '#router';
 import { jsxRenderer } from 'hono/jsx-renderer';
 import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
+
+import NotFound from './routes/_not-found';
+
+import { withSSR } from '@buna/router';
+import { config as router } from '#router';
 import { FC } from 'hono/jsx';
 
-// 1) Extend ContextRenderer to accept extras props
-declare module 'hono' {
-  interface ContextRenderer {
-    (content: string | Promise<string>, props?: { title?: string }): Response;
-  }
-}
-
 export const RouterView: FC = (props) => <>{props.children}</>;
+
 const app = new Hono();
 
-/**
- * Renderer
- */
 app.use(
   jsxRenderer(
     ({ children, title }) => {
+      const finalTitle = title ?? 'Buna Playground';
+
       return (
         <html lang="en">
           <head>
@@ -33,46 +29,20 @@ app.use(
             />
             <Link href="/src/style.css" rel="stylesheet" />
             <Script src="/src/client.tsx" />
-            <title>{title ?? 'Hono + Vite + Nano Stores'}</title>
+            <title>{finalTitle}</title>
           </head>
           <body>
-            <div id="app">{children}</div>
+            <div id="app" />
           </body>
         </html>
       );
     },
-    {
-      stream: true, // enables SSR streaming + Suspense
-    },
+    { stream: true },
   ),
 );
 
-app.get('*', (c) => {
-  const url = new URL(c.req.url);
-  const search = Object.fromEntries(url.searchParams.entries());
-  const hash = url.hash;
-
-  // IMPORTANT: sync Nano Stores router with the current URL on SSR
-  $router.open(url.pathname + url.search + url.hash);
-
-  const match = $router.get();
-
-  if (!match) {
-    c.status(404);
-    return c.render(
-      <RouterView>
-        <NotFound />
-      </RouterView>,
-    );
-  }
-
-  const Component = routeComponents[match.path as RoutingKeys];
-
-  const fallback = Component ? (
-    <Component c={c} params={match.params as any} search={search} hash={hash} />
-  ) : null;
-
-  return c.render(<RouterView>{fallback}</RouterView>);
+export default withSSR(app, {
+  RouterView,
+  NotFound,
+  router,
 });
-
-export default app;

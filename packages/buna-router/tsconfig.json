@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "types": [
+      "hono/jsx"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "create-buna-app",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "create-buna-app": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^24.10.1"
+  }
+}

@@ -12,6 +12,11 @@
     ],
     "allowImportingTsExtensions": true,
     "noEmit": true,
+        "types": [
+      "hono/jsx"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
     "baseUrl": ".",
     "paths": {
       "#router": ["./.buna/client-routes.generated.ts"],

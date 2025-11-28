@@ -66,7 +66,7 @@ import { createRouterConfigFromGlob } from '@buna/router/runtime-client'
 
 const files = import.meta.glob('${globPattern}', { eager: true })
 
-const config = createRouterConfigFromGlob(files, { routesBase: '${base}' })
+export const config = createRouterConfigFromGlob(files, { routesBase: '${base}' })
 
 export const routes = config.routes
 export const routeComponents = config.routeComponents

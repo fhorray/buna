@@ -5,6 +5,7 @@
     "": {
       "name": "hono-vite",
       "devDependencies": {
+        "hono": "^4.10.7",
         "turbo": "^2.6.1",
       },
     },
