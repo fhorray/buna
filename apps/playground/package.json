@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@buna/router": "workspace:*",
+    "@buna/react": "workspace:*",
     "@nanostores/react": "^1.0.0",
     "@nanostores/router": "^1.0.0",
     "hono": "^4.10.7",

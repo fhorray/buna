@@ -5,7 +5,6 @@
     "": {
       "name": "hono-vite",
       "devDependencies": {
-        "hono": "^4.10.7",
         "turbo": "^2.6.1",
       },
     },
@@ -13,6 +12,7 @@
       "name": "buna-playground",
       "version": "0.0.0",
       "dependencies": {
+        "@buna/react": "workspace:*",
         "@buna/router": "workspace:*",
         "@nanostores/react": "^1.0.0",
         "@nanostores/router": "^1.0.0",
@@ -67,6 +67,15 @@
         "vite": "^7.2.4",
       },
     },
+    "packages/buna-react": {
+      "name": "@buna/react",
+      "version": "0.0.0",
+      "peerDependencies": {
+        "@buna/router": "workspace:*",
+        "hono": "^4.0.0",
+        "vite": "^7.2.4",
+      },
+    },
     "packages/buna-router": {
       "name": "@buna/router",
       "version": "0.0.0",
@@ -107,6 +116,8 @@
     "@buna/cli": ["@buna/cli@workspace:packages/buna-cli"],
 
     "@buna/config": ["@buna/config@workspace:packages/buna-config"],
+
+    "@buna/react": ["@buna/react@workspace:packages/buna-react"],
 
     "@buna/router": ["@buna/router@workspace:packages/buna-router"],
 

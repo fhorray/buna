@@ -1,6 +1,6 @@
 // packages/buna-router/src/runtime-client.ts
 import { createRouter } from '@nanostores/router'
-import type { RoutesContext, RouteEntry } from './router-core'
+import type { RoutesContext, RouteEntry, DirectoryLayer } from './router-core'
 import { buildRoutesContextFromModules } from './router-core'
 
 export type RouterConfig = {
@@ -14,7 +14,7 @@ export type RouterConfig = {
       filePath: string
     }
   >
-  directoryLayers: RoutesContext['directoryLayers']
+  directoryLayers: Record<string, DirectoryLayer>
   directoryOrder: string[]
   $router: ReturnType<typeof createRouter>
 }

@@ -1,15 +1,10 @@
-// apps/playground/src/server.tsx
 import { Hono } from 'hono';
 import { jsxRenderer } from 'hono/jsx-renderer';
 import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
 
-import NotFound from './routes/_not-found';
-
-import { withSSR } from '@buna/router';
 import { config as router } from '#router';
-import { FC } from 'hono/jsx';
-
-export const RouterView: FC = (props) => <>{props.children}</>;
+import { withSSR } from '@buna/router';
+import { RouterView } from './shell';
 
 const app = new Hono();
 
@@ -42,7 +37,5 @@ app.use(
 );
 
 export default withSSR(app, {
-  RouterView,
-  NotFound,
   router,
 });

@@ -1,3 +1,4 @@
+import { FC } from 'hono/jsx'
 import {
   filePathToPath,
   groupByDirectory,
@@ -7,7 +8,7 @@ import {
 } from './fs-helpers'
 
 export type RouteModule = {
-  default?: any
+  default?: FC
   [key: string]: any
 }
 
@@ -23,6 +24,8 @@ export type DirectoryLayer = {
   notFound?: RouteModule['default']
   layout?: RouteModule['default']
   renderer?: RouteModule['default']
+  error?: RouteModule['default']
+  loading?: RouteModule['default']
 }
 
 export type RoutesContext = {
@@ -73,6 +76,8 @@ export function buildRoutesContextFromModules(
     notFound: '_not-found.tsx',
     layout: '_layout.tsx',
     renderer: '_renderer.tsx',
+    error: '_error.tsx',
+    loading: '_error.tsx',
   }
 
   for (const dir of sortedDirectories) {
