@@ -10,6 +10,12 @@
       "DOM"
     ],
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": [
+      "vite/client",
+      "hono/jsx"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
   }
 }

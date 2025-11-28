@@ -10,6 +10,11 @@
     "dev": {
       "persistent": true,
       "cache": false
+    },
+    "deploy": {
+      "persistent": true,
+      "dependsOn": ["^build"],
+      "cache": false
     }
   }
 }

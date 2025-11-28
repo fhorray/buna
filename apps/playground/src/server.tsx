@@ -49,12 +49,13 @@ app.use(
 
 app.get('*', (c) => {
   const url = new URL(c.req.url);
-  const match = $router.get();
   const search = Object.fromEntries(url.searchParams.entries());
   const hash = url.hash;
 
   // IMPORTANT: sync Nano Stores router with the current URL on SSR
   $router.open(url.pathname + url.search + url.hash);
+
+  const match = $router.get();
 
   if (!match) {
     c.status(404);

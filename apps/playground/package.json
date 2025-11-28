@@ -7,7 +7,7 @@
     "dev": "buna dev",
     "build": "buna build",
     "preview": "vite preview",
-    "deploy": "vite build && wrangler deploy",
+    "deploy": "buna build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
