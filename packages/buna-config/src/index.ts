@@ -1,37 +1,40 @@
-import type { BunaConfig } from "./type";
-import type { PluginOption, UserConfig as ViteUserConfig } from "vite";
-import { ensureGeneratedViteConfig } from "./generate.ts"
-import { createViteConfigFromBuna } from "./vite.ts"
-import { resolve } from "node:path";
-import { cloudflare } from "@cloudflare/vite-plugin";
-import ssrPlugin from "vite-ssr-components/plugin";
-import tailwindcss from "@tailwindcss/vite";
 import { buna } from "@buna/vite-plugin";
+import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
+import { resolve } from "node:path";
+import type { UserConfig as ViteUserConfig } from "vite";
+import ssrPlugin from "vite-ssr-components/plugin";
+import { ensureGeneratedViteConfig } from "./generate.ts";
+import type { BunaConfig, ResolvedBunaConfig } from "./type.ts";
+import { createViteConfigFromBuna } from "./vite.ts";
 
-function createDefaultViteConfig(root: string, routesDir: string): ViteUserConfig {
+
+function createDefaultViteConfig(root: string, config: BunaConfig): ViteUserConfig {
   return {
     plugins: [
       cloudflare(),
       ssrPlugin(),
       tailwindcss(),
-      buna({
-        routesDir,
-      }),
+      buna(config),
     ],
     resolve: {
       alias: {
         "#router": resolve(root, ".buna/client-routes.generated.ts"),
-        "#hono-app": resolve(root, ".buna/server-routes.generated.ts"),
+        "#server": resolve(root, ".buna/server-routes.generated.ts"),
+        "#api": resolve(root, ".buna/query.generated.ts"),
         "@": resolve(root, "src"),
       },
     },
   };
 }
 
-export function defineConfig(config: BunaConfig): BunaConfig {
-  const root = config.root ?? process.cwd();
-  const routesDir = config.routes?.dir ?? 'src/routes';
-  const defaultVite = createDefaultViteConfig(root, routesDir);
+// TODO: here should accept BunaConfig, I should verify the type error from the routerDir
+export function defineConfig(config: ResolvedBunaConfig): ResolvedBunaConfig {
+  const root = process.cwd();
+  const routesDir = config.routesDir ?? 'src/routes';
+  const defaultVite = createDefaultViteConfig(root, {
+    routesDir,
+  });
   const userVite = config.vite ?? {};
 
   const mergedResolve = {
@@ -60,5 +63,6 @@ export function defineConfig(config: BunaConfig): BunaConfig {
   }
 };
 
-export type { BunaConfig }
-export { ensureGeneratedViteConfig, createViteConfigFromBuna }
+export { createViteConfigFromBuna, ensureGeneratedViteConfig };
+export type { BunaConfig, ResolvedBunaConfig };
+

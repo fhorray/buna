@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "#router": ["./.buna/client-routes.generated.ts"],
-      "#hono-app": ["./.buna/server-routes.generated.ts"],
+      "#api": ["./.buna/query.generated.ts"],
+      "#server": ["./.buna/server-routes.generated.ts"],
       "@/*": ["./src/*"]
     }
   },

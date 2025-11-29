@@ -1,6 +1,6 @@
-import { createComponent } from '@buna/router';
+import { CreateComponent } from '@buna/router';
 
-const GlobalError = createComponent(() => {
+const GlobalError = CreateComponent(() => {
   return (
     <main>
       <h1>Global error page</h1>

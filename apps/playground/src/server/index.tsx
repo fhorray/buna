@@ -4,7 +4,7 @@ import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
 
 import { config as router } from '#router';
 import { withSSR } from '@buna/router';
-
+import api from './api';
 const app = new Hono();
 
 app.use(
@@ -35,11 +35,8 @@ app.use(
   ),
 );
 
-app.get('/demo', async (c) => {
-  return c.json({
-    data: 'sucess',
-  });
-});
+// Api Routing
+app.route('/api', api);
 
 export default withSSR(app, {
   router,

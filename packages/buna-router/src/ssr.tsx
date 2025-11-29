@@ -8,7 +8,6 @@ import type {
   RouteComponent,
   RouteMeta,
   RouteMetaFn,
-  RouteLoader,
 } from './types';
 import { JSX } from 'hono/jsx/jsx-runtime';
 
@@ -119,14 +118,6 @@ function getRouteComponent(
 ): RouteComponent | undefined {
   const Component = router.routeComponents[route] as RouteComponent | undefined;
   return Component;
-}
-
-// Loader
-function getRouteLoader(
-  router: RouterConfig,
-  route: string,
-): RouteLoader<any, any, any> | undefined {
-  return router.routeLoaders?.[route];
 }
 
 function resolveRouteMeta(
@@ -295,19 +286,6 @@ export function createSSRHandler({
     let loaderData: unknown;
 
     try {
-      const loader = routeName ? getRouteLoader(router, routeName) : undefined;
-
-      if (loader) {
-        loaderData = await loader({
-          c,
-          params: state.params ?? {},
-          search: state.search ?? search,
-          hash: state.hash ?? hash,
-        });
-
-        console.log('[SSR loaderData]:', loaderData);
-      }
-
       pageMeta = resolveRouteMeta(Component, state, search, hash);
 
       const element = (
@@ -316,8 +294,6 @@ export function createSSRHandler({
           params={state.params ?? {}}
           search={state.search ?? search}
           hash={state.hash ?? hash}
-          // @ts-expect-error expect error since there are routes that does not use loader.
-          data={loaderData}
         />
       );
 

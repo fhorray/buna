@@ -1,12 +1,20 @@
-import { createComponent } from '@buna/router';
+import { api } from '#api';
+import { useQuery } from '@buna/react';
+import { CreateComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
-type AboutParams = {}; // no dynamic params
+type AboutParams = {
+  id: string;
+}; // no dynamic params
 type AboutSearch = {}; // no specific search schema
 
-const AboutPage = createComponent<AboutParams, AboutSearch>(
-  ({ params, search, hash, c }) => {
+const AboutPage = CreateComponent<AboutParams, AboutSearch>(
+  ({ params, search, hash }) => {
     const [showDebug, setShowDebug] = useState(false);
+
+    const $store = api.todo.byId(params.id);
+    const { data, loading, error } = useQuery($store);
+    console.log(data);
 
     return (
       <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
@@ -46,7 +54,7 @@ const AboutPage = createComponent<AboutParams, AboutSearch>(
 
               <p className="text-slate-300 mb-4">
                 It is a simple example of a typed route component built with{' '}
-                <span className="text-emerald-400">createComponent()</span>. You
+                <span className="text-emerald-400">CreateComponent()</span>. You
                 can use it as a reference when wiring new pages, layouts, or
                 route-specific metadata.
               </p>

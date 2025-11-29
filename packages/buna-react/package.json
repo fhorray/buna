@@ -12,6 +12,7 @@
   "peerDependencies": {
     "vite": "^7.2.4",
     "hono": "^4.0.0",
-    "@buna/router": "workspace:*"
+    "@buna/router": "workspace:*",
+    "nanostores": "^1.1.0"
   }
 }

@@ -1,13 +1,27 @@
-import type { RouteLoader } from './types';
+import { nanoquery } from '@nanostores/query';
 
-export type InferLoaderData<T> = T extends RouteLoader<infer D, any, any>
-  ? D
-  : never;
+// NanoQuery
+export const [
+  createFetcherStore,
+  createMutatorStore,
+  { invalidateKeys, revalidateKeys, mutateCache },
+] = nanoquery({
+  // keys: ['GET', '/api/demo'] or ['POST', '/api/demo', { foo: 'bar' }]
+  async fetcher(...keyParts) {
+    const [method, path, body] = keyParts as [string, string, unknown?];
 
-export function createRouteQuery<
-  TData,
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
->(loader: RouteLoader<TData, TParams, TSearch>) {
-  return loader;
-}
+    const init: RequestInit = { method };
+
+    if (body != null) {
+      init.headers = { 'Content-Type': 'application/json' };
+      init.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(path, init);
+    if (!res.ok) {
+      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
+  },
+});

@@ -1,42 +1,44 @@
-// packages/buna-config/src/types.ts
 import type { UserConfig as ViteUserConfig } from 'vite'
 
 export type BunaConfig = {
   /**
-   * Root directory of the project.
-   * If not provided, it will default to process.cwd().
-   * 
-   * Use this only if your project is NOT located at the repository root
-   * or if you want Buna to scan/build from a specific directory.
+   * Relative path (from project root) to the routes directory
+   * Example: 'src/routes'
    */
-  root?: string
+  routesDir?: string
+  /**
+   * Relative path (from project root) to the server directory
+   * Example: 'src/server'
+   */
+  serverDir?: string
 
   /**
-   * Settings for file-based routes.
-   * Used by the Buna plugin to automatically scan and generate route files.
+   * Relative path (from project root) to the generated client routes file
+   * Example: '.buna/client-routes.generated.ts'
    */
-  routes?: {
-    /**
-     * Directory where page files are located.
-     * React components inside this folder will be treated as pages.
-     * 
-     * Example:
-     *  'src/routes'  →  /about.tsx  →  /about
-     */
-    dir?: string
-  }
+  outputClient?: string
 
   /**
-   * Configuration of the dev server only.
-   * Useful when overriding the default port or customizing server behavior.
+   * Relative path (from project root) to the generated Hono routes file
+   * Example: '.buna/server-routes.generated.tsx'
    */
-  server?: {
-    /**
-     * Port number used by Vite dev server.
-     * Default: 5173
-     */
-    port?: number
-  }
+  outputHono?: string
+
+  /**
+   * Relative path (from project root) to your Hono API entry file.
+   * Example: 'src/server/api.ts' or 'apps/playground/src/server/index.tsx'
+   */
+  apiFile?: string;
+
+
+  /**
+   * Where to generate nanoquery stores file.
+   * Example: '.buna/query.generated.ts'
+   */
+  outputQuery?: string;
+
+  apiBasePath?: string;
+
 
   /**
    * (Optional) Overrides for Vite itself.
@@ -46,4 +48,15 @@ export type BunaConfig = {
    * so this is the right place for user-level customization.
    */
   vite?: ViteUserConfig
+}
+
+export type ResolvedBunaConfig = {
+  routesDir: string
+  serverDir: string
+  outputClient: string
+  outputHono: string
+  apiFile: string
+  outputQuery: string;
+  apiBasePath: string;
+  vite: ViteUserConfig
 }

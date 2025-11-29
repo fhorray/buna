@@ -8,7 +8,7 @@ import type { RouteComponent, RouteProps } from './types';
  * - Ensures the final component always receives the correct typings.
  * - Works on both server (SSR) and client (hydrated SPA).
  */
-export function createComponent<
+export function CreateComponent<
   TParams extends Record<string, string> = Record<string, string>,
   TSearch extends Record<string, string> = Record<string, string>,
   TExtraProps = unknown,

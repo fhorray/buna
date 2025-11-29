@@ -82,21 +82,6 @@ export type LayoutComponent<
   TSearch extends RouteSearch = RouteSearch,
 > = FC<LayoutProps<TParams, TSearch>>;
 
-// ---- Loader types ----
-
-export type LoaderContext<
-  TParams extends RouteParams = RouteParams,
-  TSearch extends RouteSearch = RouteSearch,
-> = RouteLocation<TParams, TSearch> & {
-  c: Context;
-};
-
-export type RouteLoader<
-  TData = unknown,
-  TParams extends RouteParams = RouteParams,
-  TSearch extends RouteSearch = RouteSearch,
-> = (ctx: LoaderContext<TParams, TSearch>) => Promise<TData> | TData;
-
 // ---- Hono renderer augmentation ----
 
 declare module 'hono' {
