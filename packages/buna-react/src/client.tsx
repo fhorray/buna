@@ -11,6 +11,8 @@ import type {
 } from '@buna/router';
 import type { RouterConfig } from '@buna/router/runtime-client';
 
+import { $devtoolsEnabled, setRouterSnapshot } from '@buna/devtools';
+
 type RouterState = ReturnType<RouterConfig['$router']['get']>;
 
 type DirectoryLayerLike = {
@@ -150,8 +152,37 @@ function createClientRouterComponent(
 
     // Subscribe to router state changes
     useEffect(() => {
-      const unsubscribe = $router.listen((value) => setState(value));
-      return () => unsubscribe();
+      const unsubscribe = $router.listen((value) => {
+        setState(value);
+
+        if ($devtoolsEnabled.get()) {
+          setRouterSnapshot({
+            currentPath: value?.path ?? '/no-path',
+            params: value?.params ?? {},
+            search: value?.search ?? {},
+            hash: value?.hash,
+            routes: router.routes,
+            routesMeta: router.routesMeta,
+          });
+        }
+      });
+
+      // Send initial snapshot once on mount
+      if ($devtoolsEnabled.get()) {
+        const value = $router.get();
+        setRouterSnapshot({
+          currentPath: value?.path ?? '/no-path',
+          params: value?.params ?? {},
+          search: value?.search ?? {},
+          hash: value?.hash,
+          routes: router.routes,
+          routesMeta: router.routesMeta,
+        });
+      }
+
+      return () => {
+        unsubscribe();
+      };
     }, []);
 
     // Sync document.title with route metadata

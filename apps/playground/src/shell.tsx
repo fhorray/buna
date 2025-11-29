@@ -1,3 +1,4 @@
+import { BunaDevtoolsPanel } from '@buna/devtools';
 import type { Child, FC } from 'hono/jsx';
 
 type RouterViewProps = {
@@ -6,5 +7,10 @@ type RouterViewProps = {
 
 export const RouterView: FC<RouterViewProps> = ({ children }) => {
   // Some logic here
-  return <>{children}</>;
+  return (
+    <>
+      {import.meta.env.DEV ? <BunaDevtoolsPanel /> : null}
+      {children}
+    </>
+  );
 };

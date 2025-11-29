@@ -5,6 +5,7 @@ import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
 import { config as router } from '#router';
 import { withSSR } from '@buna/router';
 import api from './api';
+import { RouterView } from '@/shell';
 const app = new Hono();
 
 app.use(
@@ -39,5 +40,6 @@ app.use(
 app.route('/api', api);
 
 export default withSSR(app, {
+  RouterView,
   router,
 });

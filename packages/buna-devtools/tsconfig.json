@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "hono/jsx"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+  }
+}
