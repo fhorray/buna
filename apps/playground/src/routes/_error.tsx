@@ -1,7 +1,6 @@
-// src/routes/_error.tsx
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 
-const GlobalError = createRouteComponent(() => {
+const GlobalError = createComponent(() => {
   return (
     <main>
       <h1>Global error page</h1>

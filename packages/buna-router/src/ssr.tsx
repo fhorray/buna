@@ -4,9 +4,11 @@ import type { DirectoryLayer } from './router-core';
 import type { RouterConfig } from './runtime-client';
 import type {
   LayoutComponent,
+  NotFoundComponent,
   RouteComponent,
   RouteMeta,
   RouteMetaFn,
+  RouteLoader,
 } from './types';
 import { JSX } from 'hono/jsx/jsx-runtime';
 
@@ -34,7 +36,7 @@ const DefaultRouterView: RouterViewComponent = ({ children }) => {
 };
 
 // DEFAULT NOT FOUND COMPONENT
-const DefaultNotFound: RouteComponent = (_props) => (
+const DefaultNotFound: NotFoundComponent = () => (
   <main>
     <h1>404 – Not Found</h1>
   </main>
@@ -105,6 +107,9 @@ function syncRouterFromRequest(
   router.$router.open(url.pathname + url.search + url.hash);
   const state = router.$router.get();
 
+  // set data inside hono context to pass to the components?
+  // c.set("hash", hash);
+
   return { state, search, hash };
 }
 
@@ -114,6 +119,14 @@ function getRouteComponent(
 ): RouteComponent | undefined {
   const Component = router.routeComponents[route] as RouteComponent | undefined;
   return Component;
+}
+
+// Loader
+function getRouteLoader(
+  router: RouterConfig,
+  route: string,
+): RouteLoader<any, any, any> | undefined {
+  return router.routeLoaders?.[route];
 }
 
 function resolveRouteMeta(
@@ -201,12 +214,12 @@ function renderNotFoundForPath(
   path: string,
 ) {
   const layer = getLayerForPath(router, path);
-  const NotFound = (layer?.notFound ?? DefaultNotFound) as RouteComponent;
+  const NotFound = (layer?.notFound ?? DefaultNotFound) as NotFoundComponent;
 
   c.status(404);
   return c.render(
     <RouterView>
-      <NotFound params={{}} search={{}} hash="" />
+      <NotFound c={c} />
     </RouterView>,
   );
 }
@@ -218,12 +231,13 @@ function renderNotFoundForRoute(
   routeName: string,
 ) {
   const layer = getLayerForRoute(router, routeName);
-  const NotFound = (layer?.notFound ?? DefaultNotFound) as RouteComponent;
+  const NotFound = (layer?.notFound ?? DefaultNotFound) as NotFoundComponent;
 
   c.status(404);
   return c.render(
     <RouterView>
-      <NotFound params={{}} search={{}} hash="" />
+      {/* TODO: set search, params hash etc.. */}
+      <NotFound c={c} />
     </RouterView>,
   );
 }
@@ -248,7 +262,7 @@ function renderErrorForRoute(
   c.status(500);
   return c.render(
     <RouterView>
-      <ErrorBoundary error={error} />,
+      <ErrorBoundary error={error} />
     </RouterView>,
   );
 }
@@ -278,29 +292,33 @@ export function createSSRHandler({
     }
 
     let pageMeta: RouteMeta | undefined;
+    let loaderData: unknown;
 
     try {
+      const loader = routeName ? getRouteLoader(router, routeName) : undefined;
+
+      if (loader) {
+        loaderData = await loader({
+          c,
+          params: state.params ?? {},
+          search: state.search ?? search,
+          hash: state.hash ?? hash,
+        });
+
+        console.log('[SSR loaderData]:', loaderData);
+      }
+
       pageMeta = resolveRouteMeta(Component, state, search, hash);
 
-      const layouts = getLayoutChainForRoute(router, routeName);
-
-      const element = layouts.reduceRight<JSX.Element>(
-        (child, Layout) => (
-          <Layout
-            c={c}
-            params={state.params ?? {}}
-            search={state.search ?? search}
-            hash={state.hash ?? hash}
-          >
-            {child}
-          </Layout>
-        ),
+      const element = (
         <Component
           c={c}
           params={state.params ?? {}}
           search={state.search ?? search}
           hash={state.hash ?? hash}
-        />,
+          // @ts-expect-error expect error since there are routes that does not use loader.
+          data={loaderData}
+        />
       );
 
       return c.render(element, {

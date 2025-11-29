@@ -1,5 +1,23 @@
+import 'hono';
 import type { Child, FC } from 'hono/jsx';
 import type { Context } from 'hono';
+
+
+// ---- Shared primitives ----
+
+export type RouteParams = Record<string, string>;
+export type RouteSearch = Record<string, string>;
+
+export type RouteLocation<
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = {
+  params: TParams;
+  search: TSearch;
+  hash: string;
+};
+
+// ---- Meta ----
 
 export type RouteMeta = {
   title?: string;
@@ -10,67 +28,76 @@ export type RouteMeta = {
 };
 
 export type MetaContext<
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
-> = {
-  params: TParams;
-  search: TSearch;
-  hash: string;
-};
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = RouteLocation<TParams, TSearch>;
 
 export type RouteMetaFn<
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
 > = (ctx: MetaContext<TParams, TSearch>) => RouteMeta;
 
-export type RouteProps<
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
-  TExtraProps = unknown,
-> = TExtraProps & {
-  c?: Context; // present in SSR, optional on client 
-  params: TParams;
-  search: TSearch;
-  hash: string;
-  children: Child
-} | {
-  params: TParams;
-  search: TSearch;
-  hash: string;
-  children: Child
-};
+// ---- Core route props ----
 
-// Default Buna Route Component
+export type RouteProps<
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+  TExtraProps = unknown,
+> = RouteLocation<TParams, TSearch> & {
+  c: Context | undefined;
+} & TExtraProps;
+
 export type RouteComponent<
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
   TExtraProps = unknown,
 > = FC<RouteProps<TParams, TSearch, TExtraProps>> & {
   meta?: RouteMeta | RouteMetaFn<TParams, TSearch>;
 };
 
-export type CreateRouteComponentOptions<
-  TParams extends Record<string, string> = Record<string, string>,
-  TSearch extends Record<string, string> = Record<string, string>,
-> = {
-  meta?: RouteMeta | RouteMetaFn<TParams, TSearch>;
+export type NotFoundComponentProps = {
+  c: Context
+} | {
+  c?: Context
+}
+
+export type NotFoundComponent = FC<NotFoundComponentProps>;
+
+
+// ---- Layout component ----
+
+export type LayoutProps<
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = RouteLocation<TParams, TSearch> & {
+  children: Child;
+  /**
+   * Optional because some layouts might be used without `Context`
+   */
+  c?: Context;
 };
 
-// Default Bunna Layout Component
-export type LayoutComponent = FC<{
-  children: Child;
-  params: Record<string, string>;
-  search: Record<string, string>;
-  hash: string;
-}> | FC<{
-  children: Child;
-  c?: Context;
-  params: Record<string, string>;
-  search: Record<string, string>;
-  hash: string;
-}>;
+export type LayoutComponent<
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = FC<LayoutProps<TParams, TSearch>>;
 
+// ---- Loader types ----
 
+export type LoaderContext<
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = RouteLocation<TParams, TSearch> & {
+  c: Context;
+};
+
+export type RouteLoader<
+  TData = unknown,
+  TParams extends RouteParams = RouteParams,
+  TSearch extends RouteSearch = RouteSearch,
+> = (ctx: LoaderContext<TParams, TSearch>) => Promise<TData> | TData;
+
+// ---- Hono renderer augmentation ----
 
 declare module 'hono' {
   interface ContextRenderer {

@@ -1,4 +1,4 @@
-import { createRouteComponent, RouteComponent } from '@buna/router';
+import { createComponent, RouteComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
 type AboutParams = {
@@ -8,7 +8,7 @@ type AboutSearch = {
   dataSearch: 'test search';
 }; // no specific search schema
 
-export default createRouteComponent<AboutParams, AboutSearch>((props) => {
+export default createComponent<AboutParams, AboutSearch>((props) => {
   const [count, setCount] = useState(0);
   console.log('DATA ABOUT: ', props.params.dataAbout);
   console.log('DATA SEARCH: ', props.search.dataSearch);

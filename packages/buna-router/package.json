@@ -4,7 +4,7 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
-"exports": {
+  "exports": {
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
@@ -17,13 +17,13 @@
       "import": "./src/runtime-hono.tsx",
       "types": "./src/runtime-hono.tsx"
     },
-    "./fs-helpers": {
-      "import": "./src/fs-helpers.ts",
-      "types": "./src/fs-helpers.ts"
-    },
     "./router-core": {
       "import": "./src/router-core.ts",
       "types": "./src/router-core.ts"
+    },
+    "./query": {
+      "import": "./src/query.ts",
+      "types": "./src/query.ts"
     }
   },
   "files": [

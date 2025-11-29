@@ -1,5 +1,5 @@
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 
-export default createRouteComponent(function () {
+export default createComponent(function () {
   return <div className="text-red-600 text-2xl font-bold">Posts Route</div>;
 });

@@ -4,6 +4,7 @@ import { hydrateRoot } from 'hono/jsx/dom/client';
 
 import type {
   LayoutComponent,
+  NotFoundComponent,
   RouteComponent,
   RouteMeta,
   RouteMetaFn,
@@ -31,7 +32,7 @@ type CreateClientAppOptions = {
 };
 
 // Default 404 fallback when no _not-found.tsx exists
-const DefaultNotFound: RouteComponent = (_props) => (
+const DefaultNotFound: NotFoundComponent = (_props) => (
   <main>
     <h1>404 – Not Found</h1>
   </main>
@@ -79,23 +80,23 @@ function getLayoutChainForRoute(
   >;
 
   if (!routeName) {
-    const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+    const rootLayout = layersByDir['']?.layout as LayoutComponent | undefined;
     return rootLayout ? [rootLayout] : [];
   }
 
   const meta = router.routesMeta[routeName];
   if (!meta) {
-    const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+    const rootLayout = layersByDir['']?.layout as LayoutComponent | undefined;
     return rootLayout ? [rootLayout] : [];
   }
 
   const dir = meta.directory ?? '';
   const segments = dir === '' ? [] : dir.split('/');
 
-  const layouts: RouteComponent[] = [];
+  const layouts: LayoutComponent[] = [];
 
   // root directory layout
-  const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+  const rootLayout = layersByDir['']?.layout as LayoutComponent | undefined;
   if (rootLayout) {
     layouts.push(rootLayout);
   }
@@ -105,7 +106,7 @@ function getLayoutChainForRoute(
   for (const segment of segments) {
     current = current ? `${current}/${segment}` : segment;
     const layer = layersByDir[current];
-    const layout = layer?.layout as RouteComponent | undefined;
+    const layout = layer?.layout as LayoutComponent | undefined;
     if (layout) {
       layouts.push(layout);
     }
@@ -163,11 +164,11 @@ function createClientRouterComponent(
     if (!state || !state.route) {
       const layer = getLayerForRoute(router, null);
       const NotFound =
-        (layer?.notFound as RouteComponent | undefined) ?? DefaultNotFound;
+        (layer?.notFound as NotFoundComponent | undefined) ?? DefaultNotFound;
 
       return (
         <RouterView>
-          <NotFound params={{}} search={{}} hash="" />
+          <NotFound />
         </RouterView>
       );
     }
@@ -179,15 +180,11 @@ function createClientRouterComponent(
     if (!Component) {
       const layer = getLayerForRoute(router, routeName);
       const NotFound =
-        (layer?.notFound as RouteComponent | undefined) ?? DefaultNotFound;
+        (layer?.notFound as NotFoundComponent | undefined) ?? DefaultNotFound;
 
       return (
         <RouterView>
-          <NotFound
-            params={state.params ?? {}}
-            search={state.search ?? {}}
-            hash={state.hash ?? ''}
-          />
+          <NotFound />
         </RouterView>
       );
     }
@@ -201,6 +198,7 @@ function createClientRouterComponent(
       try {
         return (
           <Component
+            c={undefined}
             params={props.params}
             search={props.search}
             hash={props.hash}
@@ -210,6 +208,7 @@ function createClientRouterComponent(
         console.error('[Buna] Error while rendering route', routeName, err);
         return (
           <ErrorBoundary
+            c={undefined}
             params={props.params}
             search={props.search}
             hash={props.hash}
@@ -231,6 +230,7 @@ function createClientRouterComponent(
         </Layout>
       ),
       <SafeRoute
+        c={undefined}
         params={state.params ?? {}}
         search={state.search ?? {}}
         hash={state.hash ?? ''}

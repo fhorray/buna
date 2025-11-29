@@ -22,7 +22,7 @@ Already implemented:
 - ✔ Meta API via `.meta` on route components
 - ✔ Dev playground included
 - ✔ Monorepo structure ready for scaling
-- ✔ Typed `createRouteComponent()` layer for DX
+- ✔ Typed `createComponent()` layer for DX
 
 ---
 
@@ -83,16 +83,16 @@ export default config.app;
 
 ## 🧩 Route Components + Meta API
 
-Routes are built using `createRouteComponent()` with full typing + optional `.meta` for SEO and SSR:
+Routes are built using `createComponent()` with full typing + optional `.meta` for SEO and SSR:
 
 ```tsx
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
 type AboutParams = {};
 type AboutSearch = {};
 
-const AboutPage = createRouteComponent<AboutParams, AboutSearch>(
+const AboutPage = createComponent<AboutParams, AboutSearch>(
   ({ params, search, hash, c }) => {
     const [showDebug, setShowDebug] = useState(false);
 
@@ -125,9 +125,9 @@ export default AboutPage;
 - Supports MDX, JSX, TSX routes
 
 ```tsx
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 
-export default createRouteComponent(({ params }) => {
+export default createComponent(({ params }) => {
   return <h1>Post {params.id}</h1>;
 });
 ```
@@ -193,7 +193,7 @@ Very likely format:
 ## 🧪 Example — Future `loaderQuery()` Concept
 
 ```tsx
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 import { createRouteQuery } from '@buna/router/query';
 
 export const loaderQuery = createRouteQuery(async ({ params }) => {
@@ -201,7 +201,7 @@ export const loaderQuery = createRouteQuery(async ({ params }) => {
   return { post: await res.json() };
 });
 
-export default createRouteComponent(({ data }) => (
+export default createComponent(({ data }) => (
   <article>
     <h1>{data.post.title}</h1>
     <p>{data.post.body}</p>

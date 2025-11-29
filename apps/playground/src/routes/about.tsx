@@ -1,10 +1,10 @@
-import { createRouteComponent } from '@buna/router';
+import { createComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
 type AboutParams = {}; // no dynamic params
 type AboutSearch = {}; // no specific search schema
 
-const AboutPage = createRouteComponent<AboutParams, AboutSearch>(
+const AboutPage = createComponent<AboutParams, AboutSearch>(
   ({ params, search, hash, c }) => {
     const [showDebug, setShowDebug] = useState(false);
 
@@ -46,9 +46,9 @@ const AboutPage = createRouteComponent<AboutParams, AboutSearch>(
 
               <p className="text-slate-300 mb-4">
                 It is a simple example of a typed route component built with{' '}
-                <span className="text-emerald-400">createRouteComponent()</span>
-                . You can use it as a reference when wiring new pages, layouts,
-                or route-specific metadata.
+                <span className="text-emerald-400">createComponent()</span>. You
+                can use it as a reference when wiring new pages, layouts, or
+                route-specific metadata.
               </p>
 
               <ul className="space-y-2 text-sm text-slate-300">

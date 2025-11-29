@@ -6,6 +6,7 @@ import {
   sortDirectoriesByDepth,
   pathToDirectoryPath,
 } from './fs-helpers'
+import { NotFoundComponent } from './types'
 
 export type RouteModule = {
   default?: FC
@@ -21,7 +22,7 @@ export type RouteEntry = {
 }
 
 export type DirectoryLayer = {
-  notFound?: RouteModule['default']
+  notFound?: NotFoundComponent
   layout?: RouteModule['default']
   error?: RouteModule['default']
   loading?: RouteModule['default']

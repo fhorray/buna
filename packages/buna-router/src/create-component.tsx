@@ -1,10 +1,6 @@
 // create-route-component.ts
 import { HtmlEscapedString } from 'hono/utils/html';
-import type {
-  CreateRouteComponentOptions,
-  RouteComponent,
-  RouteProps,
-} from './types';
+import type { RouteComponent, RouteProps } from './types';
 
 /**
  * Helper to create strongly-typed route components.
@@ -12,7 +8,7 @@ import type {
  * - Ensures the final component always receives the correct typings.
  * - Works on both server (SSR) and client (hydrated SPA).
  */
-export function createRouteComponent<
+export function createComponent<
   TParams extends Record<string, string> = Record<string, string>,
   TSearch extends Record<string, string> = Record<string, string>,
   TExtraProps = unknown,
@@ -20,7 +16,7 @@ export function createRouteComponent<
   render: (
     props: RouteProps<TParams, TSearch, TExtraProps>,
   ) => HtmlEscapedString | Promise<HtmlEscapedString>, // TODO: is this type right? I should verify it later
-  options?: CreateRouteComponentOptions<TParams, TSearch>,
+  options?: RouteComponent<TParams, TSearch>,
 ): RouteComponent<TParams, TSearch, TExtraProps> {
   const Component = render as RouteComponent<TParams, TSearch, TExtraProps>;
 
