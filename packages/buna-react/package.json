@@ -14,5 +14,8 @@
     "hono": "^4.0.0",
     "@buna/router": "workspace:*",
     "nanostores": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1"
   }
 }

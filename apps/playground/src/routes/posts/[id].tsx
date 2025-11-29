@@ -1,32 +1,15 @@
+// apps/playground/src/routes/posts/[id].tsx
 import { CreateComponent } from '@buna/router';
 
-type PostProps = {
-  id: string;
-};
+const PostPage = CreateComponent('/posts/:id', ({ params, search, hash }) => {
+  // params: { id: string }
+  // se tentar params.slug -> erro de tipo
 
-type LoaderResult = { post: { data: string } } | { error: string };
-
-const PostsDetailsPage = CreateComponent<
-  PostProps,
-  {},
-  {
-    data: string;
-  }
->(function PostPage({ params, data }) {
-  if (typeof window === 'undefined') {
-    console.log('[SSR component data]', data);
-  }
   return (
     <div>
-      <h1>Post {data}</h1>
+      <h1>Post {params.id}</h1>
     </div>
   );
 });
 
-PostsDetailsPage.meta = ({ params }) => {
-  return {
-    title: `Posts - ${params.id}`,
-  };
-};
-
-export default PostsDetailsPage;
+export default PostPage;

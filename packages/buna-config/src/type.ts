@@ -37,6 +37,12 @@ export type BunaConfig = {
    */
   outputQuery?: string;
 
+  /**
+ * Where to generate route type declarations (.d.ts).
+ * Example: '.buna/routes.generated.d.ts'
+ */
+  outputTypes?: string;
+
   apiBasePath?: string;
 
 
@@ -57,6 +63,7 @@ export type ResolvedBunaConfig = {
   outputHono: string
   apiFile: string
   outputQuery: string;
+  outputTypes: string;
   apiBasePath: string;
   vite: ViteUserConfig
 }

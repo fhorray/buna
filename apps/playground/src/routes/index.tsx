@@ -1,4 +1,4 @@
-import { CreateComponent, RouteComponent } from '@buna/router';
+import { CreateComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
 type AboutParams = {
@@ -8,7 +8,7 @@ type AboutSearch = {
   dataSearch: 'test search';
 }; // no specific search schema
 
-export default CreateComponent<AboutParams, AboutSearch>((props) => {
+export default CreateComponent('/', (props) => {
   const [count, setCount] = useState(0);
   return (
     <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">

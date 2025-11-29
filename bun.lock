@@ -71,6 +71,9 @@
     "packages/buna-react": {
       "name": "@buna/react",
       "version": "0.0.0",
+      "devDependencies": {
+        "@types/node": "^24.10.1",
+      },
       "peerDependencies": {
         "@buna/router": "workspace:*",
         "hono": "^4.0.0",

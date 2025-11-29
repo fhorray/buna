@@ -25,5 +25,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", ".buna", "worker-configuration.d.ts"]
+  "include": ["src", ".buna", "worker-configuration.d.ts", ".buna/routes.generated.d.ts"]
 }
