@@ -6,13 +6,27 @@ import type {
   DevtoolsLogEntry,
   DevtoolsMutationSnapshot,
 } from './types';
+import { persistentAtom } from '@nanostores/persistent';
 
 
 // Enable flag (only used in dev)
-export const $devtoolsEnabled = atom<boolean>(
+export const $devtoolsEnabled = persistentAtom<boolean>(
+  'devtoolsEnabled',
   typeof import.meta !== 'undefined'
     ? !!(import.meta as any).env?.DEV
     : true,
+  {
+    encode(value) {
+      return JSON.stringify(value); // always encode as JSON
+    },
+    decode(value) {
+      try {
+        return JSON.parse(value) as boolean;
+      } catch {
+        return true; // fallback default
+      }
+    },
+  },
 );
 
 // All queries keyed by an id
@@ -41,7 +55,7 @@ export function upsertQuerySnapshot(
   id: string,
   snapshot: Partial<DevtoolsQuerySnapshot> & { key: DevtoolsQueryKey },
 ): void {
-  if (!$devtoolsEnabled.get()) return;
+  // if (!$devtoolsEnabled.get()) return;
 
   const current = $queries.get()[id];
 
@@ -59,7 +73,7 @@ export function upsertQuerySnapshot(
 
 // Set router snapshot
 export function setRouterSnapshot(snapshot: RouterDevtoolsSnapshot): void {
-  if (!$devtoolsEnabled.get()) return;
+  // if (!$devtoolsEnabled.get()) return;
   $router.set({
     ...snapshot,
     // always update time implicitly via queries if needed later
@@ -69,7 +83,7 @@ export function setRouterSnapshot(snapshot: RouterDevtoolsSnapshot): void {
 export function appendLog(
   entry: Omit<DevtoolsLogEntry, 'id' | 'createdAt'>,
 ): void {
-  if (!$devtoolsEnabled.get()) return;
+  // if (!$devtoolsEnabled.get()) return;
 
   const log: DevtoolsLogEntry = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -86,7 +100,7 @@ export function upsertMutationSnapshot(
   id: string,
   snapshot: Partial<DevtoolsMutationSnapshot> & { key: DevtoolsQueryKey },
 ): void {
-  if (!$devtoolsEnabled.get()) return;
+  // if (!$devtoolsEnabled.get()) return;
 
   const current = $mutations.get()[id];
 
@@ -100,4 +114,20 @@ export function upsertMutationSnapshot(
   };
 
   $mutations.setKey(id, next);
+}
+
+
+// TOGGLES
+export function toggleDevtools(): void {
+  $devtoolsEnabled.set(!$devtoolsEnabled.get());
+}
+
+// Forçar abrir
+export function enableDevtools(): void {
+  $devtoolsEnabled.set(true);
+}
+
+// Forçar fechar
+export function disableDevtools(): void {
+  $devtoolsEnabled.set(false);
 }
