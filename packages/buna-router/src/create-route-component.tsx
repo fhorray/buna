@@ -1,13 +1,10 @@
 // create-route-component.ts
-import { FC } from 'hono/jsx';
+import { HtmlEscapedString } from 'hono/utils/html';
 import type {
   CreateRouteComponentOptions,
   RouteComponent,
-  RouteMeta,
-  RouteMetaFn,
   RouteProps,
 } from './types';
-import { HtmlEscapedString } from 'hono/utils/html';
 
 /**
  * Helper to create strongly-typed route components.

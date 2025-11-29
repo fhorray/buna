@@ -5,5 +5,5 @@ import { RouterView } from './shell';
 createClientApp({
   router,
   RouterView,
-  defaultTitle: 'Buna Playground',
+  defaultTitle: 'Buna() App',
 });

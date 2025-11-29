@@ -4,7 +4,7 @@ import fs from 'node:fs'
 
 const DEFAULT_ROUTES_DIR = 'src/routes'
 const DEFAULT_OUTPUT_CLIENT = '.buna/client-routes.generated.ts'
-const DEFAULT_OUTPUT_HONO = '.buna/hono-routes.generated.ts'
+const DEFAULT_OUTPUT_HONO = '.buna/server-routes.generated.ts'
 
 export type BunaOptions = {
   /**
@@ -21,7 +21,7 @@ export type BunaOptions = {
 
   /**
    * Relative path (from project root) to the generated Hono routes file
-   * Example: '.buna/hono-routes.generated.tsx'
+   * Example: '.buna/server-routes.generated.tsx'
    */
   outputHono?: string
 }

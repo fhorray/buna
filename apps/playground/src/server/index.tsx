@@ -4,7 +4,6 @@ import { Link, Script, ViteClient } from 'vite-ssr-components/hono';
 
 import { config as router } from '#router';
 import { withSSR } from '@buna/router';
-import { RouterView } from './shell';
 
 const app = new Hono();
 

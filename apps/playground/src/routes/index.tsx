@@ -1,8 +1,17 @@
-import { createRouteComponent } from '@buna/router';
+import { createRouteComponent, RouteComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
-export default createRouteComponent(({ hash }) => {
+type AboutParams = {
+  dataAbout: 'test about';
+}; // no dynamic params
+type AboutSearch = {
+  dataSearch: 'test search';
+}; // no specific search schema
+
+export default createRouteComponent<AboutParams, AboutSearch>((props) => {
   const [count, setCount] = useState(0);
+  console.log('DATA ABOUT: ', props.params.dataAbout);
+  console.log('DATA SEARCH: ', props.search.dataSearch);
   return (
     <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
       <div className="w-full max-w-xl text-center">

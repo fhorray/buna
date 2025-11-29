@@ -21,7 +21,7 @@ function createDefaultViteConfig(root: string, routesDir: string): ViteUserConfi
     resolve: {
       alias: {
         "#router": resolve(root, ".buna/client-routes.generated.ts"),
-        "#hono-app": resolve(root, ".buna/hono-routes.generated.ts"),
+        "#hono-app": resolve(root, ".buna/server-routes.generated.ts"),
         "@": resolve(root, "src"),
       },
     },

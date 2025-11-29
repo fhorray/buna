@@ -18,7 +18,7 @@ export function createViteConfigFromBuna(config: BunaConfig): UserConfig {
     plugins: [
       ...(userVite.plugins ?? []),
       hono({
-        entry: path.resolve(root, 'src/server.tsx')
+        entry: path.resolve(root, 'src/server/index.tsx')
       }),
     ],
   }

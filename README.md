@@ -33,7 +33,7 @@ Routes are scanned using Vite glob imports and compiled into generated files:
 ```
 .buna/
   ↳ client-routes.generated.ts
-  ↳ hono-routes.generated.tsx
+  ↳ server-routes.generated.tsx
 ```
 
 ### 🔹 `client-routes.generated.ts` (runtime-client)
@@ -60,7 +60,7 @@ export const $router = config.$router;
 export type RoutingKeys = keyof typeof routeComponents;
 ```
 
-### 🔹 `hono-routes.generated.tsx` (runtime-hono)
+### 🔹 `server-routes.generated.tsx` (runtime-hono)
 
 ```ts
 /// <reference types="vite/client" />

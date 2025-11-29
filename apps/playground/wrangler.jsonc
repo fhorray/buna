@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "buna-app",
   "compatibility_date": "2025-08-03",
-  "main": "./src/server.tsx",
+  "main": "./src/server/index.tsx",
   "compatibility_flags": [
     "nodejs_compat"
   ]
