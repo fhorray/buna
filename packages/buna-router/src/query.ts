@@ -1,19 +1,19 @@
-import { nanoquery } from '@nanostores/query';
+import { KeySelector, nanoquery } from '@nanostores/query';
 import type { ReadableAtom } from 'nanostores';
 
 import {
   $devtoolsEnabled,
   devtoolsKeyToId,
   upsertQuerySnapshot,
+  appendLog,
+  upsertMutationSnapshot,
 } from '@buna/devtools';
 
-// Base nanoquery instance
 const [
   baseCreateFetcherStore,
   baseCreateMutatorStore,
   baseHelpers,
 ] = nanoquery({
-  // keys: ['GET', '/api/demo'] or ['POST', '/api/demo', { foo: 'bar' }]
   async fetcher(...keyParts) {
     const [method, path, body] = keyParts as [string, string, unknown?];
 
@@ -23,6 +23,13 @@ const [
       upsertQuerySnapshot(id, {
         key: keyParts,
         status: 'loading',
+      });
+
+      appendLog({
+        level: 'info',
+        source: 'query',
+        message: `Fetching ${String(method)} ${String(path)}`,
+        payload: { keyParts, body },
       });
     }
 
@@ -42,7 +49,19 @@ const [
           status: 'error',
           error: { status: res.status, statusText: res.statusText },
         });
+
+        appendLog({
+          level: 'error',
+          source: 'query',
+          message: `Request failed ${String(method)} ${String(path)}`,
+          payload: {
+            status: res.status,
+            statusText: res.statusText,
+            keyParts,
+          },
+        });
       }
+
       throw new Error(`Request failed: ${res.status} ${res.statusText}`);
     }
 
@@ -54,14 +73,55 @@ const [
         status: 'success',
         data,
       });
+
+      appendLog({
+        level: 'info',
+        source: 'query',
+        message: `Request success ${String(method)} ${String(path)}`,
+        payload: { keyParts },
+      });
     }
 
     return data;
   },
 });
 
-// Public API: same names the rest of the code already uses
+// Public API
 export const createFetcherStore = baseCreateFetcherStore;
 export const createMutatorStore = baseCreateMutatorStore;
 
-export const { invalidateKeys, revalidateKeys, mutateCache } = baseHelpers;
+export const {
+  invalidateKeys,
+  revalidateKeys,
+  mutateCache,
+} = baseHelpers;
+
+// 🔥 Helpers "amigáveis" pro Devtools
+export function invalidateQuery(keyParts: unknown[]): void {
+  const [method, path] = keyParts as [string, string, ...unknown[]];
+
+
+  const selector: KeySelector = (serializedKey) => {
+    // serializedKey é string interna do nanoquery
+    // Ex.: "GET /api/todo/123", "/api/todo/123", ou algo com JSON.stringify
+    return (
+      serializedKey.includes(String(method)) &&
+      serializedKey.includes(String(path))
+    );
+  };
+
+  invalidateKeys(selector);
+}
+
+export function revalidateQuery(keyParts: unknown[]): void {
+  const [method, path] = keyParts as [string, string, ...unknown[]];
+
+  const selector: KeySelector = (serializedKey) => {
+    return (
+      serializedKey.includes(String(method)) &&
+      serializedKey.includes(String(path))
+    );
+  };
+
+  revalidateKeys(selector);
+}

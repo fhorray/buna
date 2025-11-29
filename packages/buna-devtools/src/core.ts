@@ -3,6 +3,8 @@ import type {
   DevtoolsQueryKey,
   DevtoolsQuerySnapshot,
   RouterDevtoolsSnapshot,
+  DevtoolsLogEntry,
+  DevtoolsMutationSnapshot,
 } from './types';
 
 
@@ -16,8 +18,14 @@ export const $devtoolsEnabled = atom<boolean>(
 // All queries keyed by an id
 export const $queries = map<Record<string, DevtoolsQuerySnapshot>>({});
 
+// Mutations
+export const $mutations = map<Record<string, DevtoolsMutationSnapshot>>({});
+
 // Current router snapshot
 export const $router = atom<RouterDevtoolsSnapshot | null>(null);
+
+// Logs
+export const $logs = atom<DevtoolsLogEntry[]>([]);
 
 // Small helper to generate a stable id from query key
 export function devtoolsKeyToId(keyParts: DevtoolsQueryKey): string {
@@ -56,4 +64,40 @@ export function setRouterSnapshot(snapshot: RouterDevtoolsSnapshot): void {
     ...snapshot,
     // always update time implicitly via queries if needed later
   });
+}
+
+export function appendLog(
+  entry: Omit<DevtoolsLogEntry, 'id' | 'createdAt'>,
+): void {
+  if (!$devtoolsEnabled.get()) return;
+
+  const log: DevtoolsLogEntry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    createdAt: Date.now(),
+    ...entry,
+  };
+
+  const current = $logs.get();
+  const next = [...current, log].slice(-300); // limita a 300
+  $logs.set(next);
+}
+
+export function upsertMutationSnapshot(
+  id: string,
+  snapshot: Partial<DevtoolsMutationSnapshot> & { key: DevtoolsQueryKey },
+): void {
+  if (!$devtoolsEnabled.get()) return;
+
+  const current = $mutations.get()[id];
+
+  const next: DevtoolsMutationSnapshot = {
+    ...current,
+    ...snapshot,
+    id,
+    status: 'idle',
+    updatedAt: Date.now(),
+
+  };
+
+  $mutations.setKey(id, next);
 }

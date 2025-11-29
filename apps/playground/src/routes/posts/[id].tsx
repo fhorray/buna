@@ -1,4 +1,3 @@
-// apps/playground/src/routes/posts/[id].tsx
 import { CreateComponent } from '@buna/router';
 
 const PostPage = CreateComponent('/posts/:id', ({ params, search, hash }) => {

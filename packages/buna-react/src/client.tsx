@@ -11,7 +11,7 @@ import type {
 } from '@buna/router';
 import type { RouterConfig } from '@buna/router/runtime-client';
 
-import { $devtoolsEnabled, setRouterSnapshot } from '@buna/devtools';
+import { $devtoolsEnabled, setRouterSnapshot, appendLog } from '@buna/devtools';
 
 type RouterState = ReturnType<RouterConfig['$router']['get']>;
 
@@ -157,32 +157,52 @@ function createClientRouterComponent(
 
         if ($devtoolsEnabled.get()) {
           setRouterSnapshot({
-            currentPath: value?.path ?? '/no-path',
+            currentPath: value?.path ?? '/path',
             params: value?.params ?? {},
             search: value?.search ?? {},
             hash: value?.hash,
             routes: router.routes,
             routesMeta: router.routesMeta,
           });
+
+          appendLog({
+            level: 'info',
+            source: 'router',
+            message: `Route changed to ${value?.path}`,
+            payload: {
+              params: value?.params,
+              search: value?.search,
+              hash: value?.hash,
+            },
+          });
         }
       });
 
-      // Send initial snapshot once on mount
+      // inicial
       if ($devtoolsEnabled.get()) {
         const value = $router.get();
         setRouterSnapshot({
-          currentPath: value?.path ?? '/no-path',
+          currentPath: value?.path ?? '/path',
           params: value?.params ?? {},
           search: value?.search ?? {},
           hash: value?.hash,
           routes: router.routes,
           routesMeta: router.routesMeta,
         });
+
+        appendLog({
+          level: 'info',
+          source: 'router',
+          message: `Initial route ${value?.path}`,
+          payload: {
+            params: value?.params,
+            search: value?.search,
+            hash: value?.hash,
+          },
+        });
       }
 
-      return () => {
-        unsubscribe();
-      };
+      return () => unsubscribe();
     }, []);
 
     // Sync document.title with route metadata

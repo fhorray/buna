@@ -26,3 +26,31 @@ export type RouterDevtoolsSnapshot = {
     }
   >;
 };
+
+export type DevtoolsLogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+export type DevtoolsLogSource =
+  | 'router'
+  | 'query'
+  | 'mutation'
+  | 'plugin'
+  | 'app';
+
+export type DevtoolsLogEntry = {
+  id: string;
+  level: DevtoolsLogLevel;
+  source: DevtoolsLogSource;
+  message: string;
+  payload?: unknown;
+  createdAt: number;
+};
+
+export type DevtoolsMutationSnapshot = {
+  id: string;
+  key: DevtoolsQueryKey;
+  status: DevtoolsStatus;
+  variables?: unknown;
+  data?: unknown;
+  error?: unknown;
+  updatedAt: number;
+};

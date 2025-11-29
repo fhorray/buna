@@ -3,8 +3,6 @@ import { useQuery } from '@buna/react';
 import { CreateComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
-// apps/playground/src/routes/posts/[id].tsx
-
 const AboutPage = CreateComponent('/about', ({ params, search, hash }) => {
   const [showDebug, setShowDebug] = useState(false);
 

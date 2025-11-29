@@ -435,10 +435,215 @@ export function buna(options: BunaConfig = {}): Plugin {
     configureServer(server) {
       const projectRoot = viteConfig.root;
 
+      // Devtools scaffold endpoint
+      server.middlewares.use(
+        '/__buna/devtools/scaffold-route',
+        (req, res, next) => {
+          if (req.method !== 'POST') {
+            return next();
+          }
+
+          const chunks: Buffer[] = [];
+
+          req.on('data', (chunk) => {
+            chunks.push(chunk);
+          });
+
+          req.on('end', () => {
+            try {
+              const raw = Buffer.concat(chunks).toString('utf-8');
+              const payload = raw ? JSON.parse(raw) : {};
+
+              // Example: "src/routes/new-route.tsx"
+              const relativePath: string =
+                payload.path || path.join(resolved.routesDir, 'new-route.tsx');
+
+              const componentName: string = payload.name || 'NewRoutePage';
+
+              const absPath = path.resolve(projectRoot, relativePath);
+              const routesDirAbs = path.resolve(projectRoot, resolved.routesDir);
+
+              // Security: ensure route is inside routesDir
+              if (!absPath.startsWith(routesDirAbs)) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                  JSON.stringify({
+                    ok: false,
+                    error: 'Route path must be inside routesDir',
+                  }),
+                );
+                return;
+              }
+
+              // Derive routePath from relativePath (e.g. "src/routes/posts.tsx" -> "/posts")
+              const routeRelativeToRoutesDir = path
+                .relative(resolved.routesDir, relativePath)
+                .replace(/\\/g, '/'); // normalize Windows paths
+
+              let routeSubPath = routeRelativeToRoutesDir.replace(/\.tsx?$/, '');
+              let routePath = '/' + routeSubPath;
+
+              // Normalize index files to "/" or "/foo"
+              if (routePath === '/index' || routePath === '//') {
+                routePath = '/';
+              }
+              routePath = routePath.replace(/\/index$/, '');
+              routePath = routePath.replace(/\/+/g, '/');
+
+              if (!routePath) {
+                routePath = '/';
+              }
+
+              // Ensure directory exists
+              const dir = path.dirname(absPath);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+
+              // Only write if file does not exist
+              if (!fs.existsSync(absPath)) {
+                const content = scaffoldContent({
+                  componentName,
+                  relativePath,
+                  routePath,
+                });
+
+                fs.writeFileSync(absPath, content, 'utf-8');
+              }
+
+              // Regenerate .buna files so the new route is registered
+              generateAll(projectRoot, resolved);
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  ok: true,
+                  path: relativePath,
+                }),
+              );
+            } catch (err: any) {
+              console.error('[buna devtools scaffold] error:', err);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  ok: false,
+                  error: String(err?.message ?? err),
+                }),
+              );
+            }
+          });
+        },
+      );
+
+      // Devtools "open in editor" endpoint
+      server.middlewares.use(
+        '/__buna/devtools/open-route',
+        (req, res, next) => {
+          if (req.method !== 'POST') {
+            return next();
+          }
+
+          const chunks: Buffer[] = [];
+
+          req.on('data', (chunk) => {
+            chunks.push(chunk);
+          });
+
+          req.on('end', () => {
+            try {
+              const raw = Buffer.concat(chunks).toString('utf-8');
+              const payload = raw ? JSON.parse(raw) : {};
+
+              // Aqui "path" é o path de ROTA, ex: "/settings", "/posts/:id", "/"
+              const routePath: string | undefined = payload.path;
+              if (!routePath || typeof routePath !== 'string') {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                  JSON.stringify({
+                    ok: false,
+                    error: 'Missing "path" (routePath) in payload',
+                  }),
+                );
+                return;
+              }
+
+              // Normalize route to files`s subpath
+              // "/", ""          -> "index"
+              // "/settings"      -> "settings"
+              // "/posts/:id"     -> "posts/[id]"
+              // "/blog/"         -> "blog"
+              let routeSubPath = routePath.replace(/^\/+/, ''); // tira "/" inicial
+
+              if (!routeSubPath) {
+                routeSubPath = 'index';
+              }
+
+              if (routeSubPath.endsWith('/')) {
+                routeSubPath = routeSubPath.slice(0, -1) || 'index';
+              }
+
+              // segmentos dinâmicos :id -> [id]
+              routeSubPath = routeSubPath.replace(
+                /:([A-Za-z0-9_]+)/g,
+                '[$1]',
+              );
+
+              // monta caminho relativo dentro de routesDir
+              const relativePath = path.join(
+                resolved.routesDir,
+                `${routeSubPath}.tsx`,
+              );
+
+              const absPath = path.resolve(projectRoot, relativePath);
+              const routesDirAbs = path.resolve(projectRoot, resolved.routesDir);
+
+              console.log('[open-route] routePath:', routePath);
+              console.log('[open-route] routeSubPath:', routeSubPath);
+              console.log('[open-route] relativePath:', relativePath);
+              console.log('[open-route] absPath:', absPath);
+              console.log('[open-route] routesDirAbs:', routesDirAbs);
+
+              // Security: apenas arquivos dentro de routesDir
+              if (!absPath.startsWith(routesDirAbs)) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                  JSON.stringify({
+                    ok: false,
+                    error: 'Route path must be inside routesDir',
+                  }),
+                );
+                return;
+              }
+
+              const target = `/__open-in-editor?file=${encodeURIComponent(absPath)}`;
+
+              res.statusCode = 302;
+              res.setHeader('Location', target);
+              res.end();
+            } catch (err: any) {
+              console.error('[buna devtools open-route] error:', err);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  ok: false,
+                  error: String(err?.message ?? err),
+                }),
+              );
+            }
+          });
+        },
+      );
+
       const routesDirAbs = path.resolve(projectRoot, resolved.routesDir);
       const serverDirAbs = path.resolve(projectRoot, resolved.serverDir);
 
-      // Garante que o watcher conhece esses diretórios
+      // Ensure watcher tracks these directories
       server.watcher.add([routesDirAbs, serverDirAbs]);
 
       const onFileChange = (file: string) => {
@@ -449,18 +654,18 @@ export function buna(options: BunaConfig = {}): Plugin {
 
         if (!inRoutes && !inServer) return;
 
-        // opcional: ignorar arquivos que não sejam .ts/.tsx
+        // Optional: ignore non-code files
         const ext = path.extname(abs);
         if (!['.ts', '.tsx', '.js', '.jsx'].includes(ext)) return;
 
-        // Regenerar arquivos .buna sempre que algo em routes/ ou server/ mudar
+        // Regenerate .buna files whenever something in routes/ or server/ changes
         generateAll(projectRoot, resolved);
       };
 
       server.watcher.on('add', onFileChange);
       server.watcher.on('change', onFileChange);
       server.watcher.on('unlink', onFileChange);
-    },
+    }
   }
 }
 
@@ -544,3 +749,58 @@ export function routeToName({ method, path }: ApiRouteMeta): string {
 
   return [method.toLowerCase(), ...parts].join('_');
 }
+
+
+export const scaffoldContent = (props: { routePath: string, componentName: string, relativePath: string }) => `import { CreateComponent } from '@buna/router';
+import { useState } from 'hono/jsx';
+
+const ${props.componentName} = CreateComponent('${props.routePath}', ({ params, search, hash }) => {
+  const [showDebug, setShowDebug] = useState(false);
+
+  return (
+    <div className="h-full bg-[#020617] text-slate-100 flex items-center justify-center px-6">
+      <section className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/40 p-6 space-y-4">
+        <header className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+            Buna() Route
+          </p>
+          <h1 className="text-xl font-semibold text-slate-50">
+            ${props.componentName}
+          </h1>
+          <p className="text-[12px] text-slate-400">
+            This page was scaffolded by Buna Devtools. Start editing it at
+            {' '}
+            <code className="font-mono text-[11px] text-slate-300">${props.relativePath}</code>.
+          </p>
+        </header>
+
+       
+
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-md border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/20 transition-colors"
+          onClick={() => setShowDebug((v) => !v)}
+        >
+          {showDebug ? 'Hide debug' : 'Show debug'}
+        </button>
+
+        {showDebug && (
+          <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-slate-950/70 p-3 text-[11px] text-slate-200">
+            {JSON.stringify({ params, search, hash }, null, 2)}
+          </pre>
+        )}
+      </section>
+    </div>
+  );
+});
+
+${props.componentName}.meta = ({ params }) => {
+  return {
+    title: '${props.componentName} – Buna Playground',
+    description: 'Scaffolded page created by Buna Devtools.',
+    keywords: ['buna', 'devtools', '${props.componentName}', 'route'],
+  };
+};
+
+export default ${props.componentName};
+`;
