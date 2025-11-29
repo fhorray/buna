@@ -29,8 +29,8 @@ const HomeLayout: FC<HomeLayoutProps> = ({ children }) => {
             <a href="/about" class="hover:text-slate-100 transition">
               About
             </a>
-            <a href="/blog" class="hover:text-slate-100 transition">
-              Blog
+            <a href="/test" class="hover:text-slate-100 transition">
+              Test
             </a>
             <span onClick={() => onNavigate('/posts')}>Posts</span>
           </nav>

@@ -7,8 +7,6 @@ import { useState } from 'hono/jsx';
 
 const AboutPage = CreateComponent('/about', ({ params, search, hash }) => {
   const [showDebug, setShowDebug] = useState(false);
-  // params: { id: string }
-  // se tentar params.slug -> erro de tipo
 
   return (
     <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">

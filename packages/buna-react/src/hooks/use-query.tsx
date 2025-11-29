@@ -21,7 +21,7 @@ export function useQuery<T>(store: ReadableAtom<T>): T {
     return () => {
       unbind();
     };
-  }, [store.get()]);
+  }, [store]);
 
   return value;
 }

@@ -2,7 +2,7 @@
 import { createRouter } from '@nanostores/router';
 import type { RoutesContext, RouteEntry, DirectoryLayer } from './router-core';
 import { buildRoutesContextFromModules } from './router-core';
-import type { RouteComponent, RouteLoader } from './types';
+import type { RouteComponent } from './types';
 
 export type RouterConfig = {
   routes: Record<string, string>;
@@ -17,7 +17,6 @@ export type RouterConfig = {
   >;
   directoryLayers: Record<string, DirectoryLayer>;
   directoryOrder: string[];
-  routeLoaders: Record<string, RouteLoader<any, any, any>>;
   $router: ReturnType<typeof createRouter>;
 };
 
@@ -29,7 +28,6 @@ export function createRouterConfigFromGlob(
 
   const routes: RouterConfig['routes'] = {};
   const routeComponents: RouterConfig['routeComponents'] = {};
-  const routeLoaders: RouterConfig['routeLoaders'] = {};
   const routesMeta: RouterConfig['routesMeta'] = {};
 
   for (const entry of ctx.pageEntries) {
@@ -45,12 +43,6 @@ export function createRouterConfigFromGlob(
       routeComponents[entry.name] = entry.module.default;
     }
 
-    const loader =
-      entry.module.loader ?? entry.module.loader;
-
-    if (loader) {
-      routeLoaders[entry.name] = loader as RouteLoader<any, any, any>;
-    }
   }
 
   const $router = createRouter(routes);
@@ -61,7 +53,6 @@ export function createRouterConfigFromGlob(
     routesMeta,
     directoryLayers: ctx.directoryLayers,
     directoryOrder: ctx.sortedDirectories,
-    routeLoaders,
     $router: $router as ReturnType<typeof createRouter>,
   };
 }
