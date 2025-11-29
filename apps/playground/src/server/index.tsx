@@ -35,6 +35,12 @@ app.use(
   ),
 );
 
+app.get('/demo', async (c) => {
+  return c.json({
+    data: 'sucess',
+  });
+});
+
 export default withSSR(app, {
   router,
 });

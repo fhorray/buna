@@ -1,4 +1,4 @@
-import type { FC } from 'hono/jsx';
+import type { Child, FC } from 'hono/jsx';
 import type { Context } from 'hono';
 
 export type RouteMeta = {
@@ -32,9 +32,15 @@ export type RouteProps<
   params: TParams;
   search: TSearch;
   hash: string;
+  children: Child
+} | {
+  params: TParams;
+  search: TSearch;
+  hash: string;
+  children: Child
 };
 
-// Default BUna Route Component
+// Default Buna Route Component
 export type RouteComponent<
   TParams extends Record<string, string> = Record<string, string>,
   TSearch extends Record<string, string> = Record<string, string>,
@@ -50,8 +56,21 @@ export type CreateRouteComponentOptions<
   meta?: RouteMeta | RouteMetaFn<TParams, TSearch>;
 };
 
+// Default Bunna Layout Component
+export type LayoutComponent = FC<{
+  children: Child;
+  params: Record<string, string>;
+  search: Record<string, string>;
+  hash: string;
+}> | FC<{
+  children: Child;
+  c?: Context;
+  params: Record<string, string>;
+  search: Record<string, string>;
+  hash: string;
+}>;
 
-import 'hono';
+
 
 declare module 'hono' {
   interface ContextRenderer {

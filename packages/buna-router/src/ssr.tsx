@@ -1,9 +1,14 @@
 import type { Context, Hono } from 'hono';
 import type { Child, FC } from 'hono/jsx';
-import type { RouteComponent, RouteMeta, RouteMetaFn } from './types';
-import { JSX } from 'hono/jsx/jsx-runtime';
-import type { RouterConfig } from './runtime-client';
 import type { DirectoryLayer } from './router-core';
+import type { RouterConfig } from './runtime-client';
+import type {
+  LayoutComponent,
+  RouteComponent,
+  RouteMeta,
+  RouteMetaFn,
+} from './types';
+import { JSX } from 'hono/jsx/jsx-runtime';
 
 type RouterViewComponent = FC<{ children: Child }>;
 
@@ -13,7 +18,7 @@ type CreateSSRHandlerOptions = {
    * Optional global app shell.
    * If omitted, Buna will use a default shell that simply renders children.
    */
-  // RouterView?: RouterViewComponent;
+  RouterView?: RouterViewComponent;
   defaultTitle?: string;
 };
 
@@ -44,6 +49,41 @@ const DefaultError: FC<{ error?: unknown }> = ({ error }) => (
 );
 
 // Helpers
+function getLayoutChainForRoute(
+  router: RouterConfig,
+  routeName: string | null | undefined,
+): LayoutComponent[] {
+  const layersByDir = router.directoryLayers;
+
+  if (!routeName) {
+    const rootLayout = layersByDir['']?.layout;
+    return rootLayout ? [rootLayout] : [];
+  }
+
+  const meta = router.routesMeta[routeName];
+  if (!meta) {
+    const rootLayout = layersByDir['']?.layout;
+    return rootLayout ? [rootLayout] : [];
+  }
+
+  const dir = meta.directory ?? '';
+  const segments = dir === '' ? [] : dir.split('/');
+
+  const layouts: DirectoryLayer['layout'][] = [];
+
+  const rootLayout = layersByDir['']?.layout;
+  if (rootLayout) layouts.push(rootLayout);
+
+  let current = '';
+  for (const segment of segments) {
+    current = current ? `${current}/${segment}` : segment;
+    const layout = layersByDir[current]?.layout;
+    if (layout) layouts.push(layout);
+  }
+
+  return layouts.filter(Boolean) as LayoutComponent[];
+}
+
 function searchParamsToRecord(params: URLSearchParams): Record<string, string> {
   const result: Record<string, string> = {};
 
@@ -156,7 +196,7 @@ function getLayerForPath(
 // NOT FOUND helpers
 function renderNotFoundForPath(
   c: Context,
-  // RouterView: RouterViewComponent,
+  RouterView: RouterViewComponent,
   router: RouterConfig,
   path: string,
 ) {
@@ -165,15 +205,15 @@ function renderNotFoundForPath(
 
   c.status(404);
   return c.render(
-    // <RouterView>
-    <NotFound params={{}} search={{}} hash="" />,
-    // </RouterView>,
+    <RouterView>
+      <NotFound params={{}} search={{}} hash="" />
+    </RouterView>,
   );
 }
 
 function renderNotFoundForRoute(
   c: Context,
-  // RouterView: RouterViewComponent,
+  RouterView: RouterViewComponent,
   router: RouterConfig,
   routeName: string,
 ) {
@@ -182,16 +222,16 @@ function renderNotFoundForRoute(
 
   c.status(404);
   return c.render(
-    // <RouterView>
-    <NotFound params={{}} search={{}} hash="" />,
-    // </RouterView>,
+    <RouterView>
+      <NotFound params={{}} search={{}} hash="" />
+    </RouterView>,
   );
 }
 
 // ERROR helper
 function renderErrorForRoute(
   c: Context,
-  // RouterView: RouterViewComponent,
+  RouterView: RouterViewComponent,
   router: RouterConfig,
   routeName: string | null,
   error: unknown,
@@ -207,18 +247,18 @@ function renderErrorForRoute(
 
   c.status(500);
   return c.render(
-    // <RouterView>
-    <ErrorBoundary error={error} />,
-    // </RouterView>,
+    <RouterView>
+      <ErrorBoundary error={error} />,
+    </RouterView>,
   );
 }
 
 export function createSSRHandler({
-  // RouterView,
+  RouterView,
   router,
   defaultTitle,
 }: CreateSSRHandlerOptions) {
-  // const Shell = RouterView ?? DefaultRouterView;
+  const Shell = RouterView ?? DefaultRouterView;
 
   return async (c: Context) => {
     const url = new URL(c.req.url);
@@ -227,16 +267,14 @@ export function createSSRHandler({
 
     // No route matched → 404 based on raw path
     if (!state || !state.route) {
-      //return renderNotFoundForPath(c, Shell, router, url.pathname);
-      return renderNotFoundForPath(c, router, url.pathname);
+      return renderNotFoundForPath(c, Shell, router, url.pathname);
     }
 
     const routeName = state.route as string;
     const Component = getRouteComponent(router, routeName);
 
     if (!Component) {
-      //return renderNotFoundForRoute(c, Shell, router, routeName);
-      return renderNotFoundForRoute(c, router, routeName);
+      return renderNotFoundForRoute(c, Shell, router, routeName);
     }
 
     let pageMeta: RouteMeta | undefined;
@@ -244,15 +282,25 @@ export function createSSRHandler({
     try {
       pageMeta = resolveRouteMeta(Component, state, search, hash);
 
-      const element = (
-        // <Shell>
+      const layouts = getLayoutChainForRoute(router, routeName);
+
+      const element = layouts.reduceRight<JSX.Element>(
+        (child, Layout) => (
+          <Layout
+            c={c}
+            params={state.params ?? {}}
+            search={state.search ?? search}
+            hash={state.hash ?? hash}
+          >
+            {child}
+          </Layout>
+        ),
         <Component
           c={c}
           params={state.params ?? {}}
           search={state.search ?? search}
           hash={state.hash ?? hash}
-        />
-        // </Shell>
+        />,
       );
 
       return c.render(element, {
@@ -261,8 +309,7 @@ export function createSSRHandler({
       });
     } catch (err) {
       // _error.tsx per route/directory
-      //return renderErrorForRoute(c, Shell, router, routeName, err);
-      return renderErrorForRoute(c, router, routeName, err);
+      return renderErrorForRoute(c, Shell, router, routeName, err);
     }
   };
 }

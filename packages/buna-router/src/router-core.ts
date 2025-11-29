@@ -23,7 +23,6 @@ export type RouteEntry = {
 export type DirectoryLayer = {
   notFound?: RouteModule['default']
   layout?: RouteModule['default']
-  renderer?: RouteModule['default']
   error?: RouteModule['default']
   loading?: RouteModule['default']
 }
@@ -75,17 +74,29 @@ export function buildRoutesContextFromModules(
   const kindToSuffix: Record<keyof DirectoryLayer, string> = {
     notFound: '_not-found.tsx',
     layout: '_layout.tsx',
-    renderer: '_renderer.tsx',
     error: '_error.tsx',
-    loading: '_error.tsx',
+    loading: '_loading.tsx',
   }
 
   for (const dir of sortedDirectories) {
-    const relFiles = filesByDirWithInheritance[dir] ?? []
+    const inheritedFiles = filesByDirWithInheritance[dir] ?? []
+    const ownFileNames = Object.keys(groupedByDir[dir] ?? {}) // tipo: ['_layout.tsx', 'index.tsx']
+    const ownFiles = ownFileNames.map((name) =>
+      dir ? `${dir}/${name}` : name,
+    )
+
     const layer: DirectoryLayer = {}
 
       ; (Object.keys(kindToSuffix) as (keyof DirectoryLayer)[]).forEach((kind) => {
         const suffix = kindToSuffix[kind]
+
+        // layout: only look files inside its own directory
+        // others: (eror, notFound, loading): normal inheritance
+        const relFiles =
+          kind === 'layout'
+            ? ownFiles
+            : inheritedFiles
+
         const candidates = relFiles.filter((rel) => rel.endsWith(suffix))
         if (candidates.length > 0) {
           const chosenRel = candidates[candidates.length - 1]

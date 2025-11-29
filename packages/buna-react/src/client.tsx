@@ -2,7 +2,12 @@
 import { useEffect, useState, type FC, type Child } from 'hono/jsx';
 import { hydrateRoot } from 'hono/jsx/dom/client';
 
-import type { RouteComponent, RouteMeta, RouteMetaFn } from '@buna/router';
+import type {
+  LayoutComponent,
+  RouteComponent,
+  RouteMeta,
+  RouteMetaFn,
+} from '@buna/router';
 import type { RouterConfig } from '@buna/router/runtime-client';
 
 type RouterState = ReturnType<RouterConfig['$router']['get']>;
@@ -11,6 +16,7 @@ type DirectoryLayerLike = {
   notFound?: RouteComponent;
   error?: RouteComponent;
   loading?: RouteComponent;
+  layout?: LayoutComponent;
 };
 
 type CreateClientAppOptions = {
@@ -61,6 +67,51 @@ function getLayerForRoute(
 
   const dir = meta.directory ?? '';
   return layersByDir[dir] ?? layersByDir[''];
+}
+
+function getLayoutChainForRoute(
+  router: RouterConfig,
+  routeName: string | null | undefined,
+): LayoutComponent[] {
+  const layersByDir = router.directoryLayers as Record<
+    string,
+    DirectoryLayerLike
+  >;
+
+  if (!routeName) {
+    const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+    return rootLayout ? [rootLayout] : [];
+  }
+
+  const meta = router.routesMeta[routeName];
+  if (!meta) {
+    const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+    return rootLayout ? [rootLayout] : [];
+  }
+
+  const dir = meta.directory ?? '';
+  const segments = dir === '' ? [] : dir.split('/');
+
+  const layouts: RouteComponent[] = [];
+
+  // root directory layout
+  const rootLayout = layersByDir['']?.layout as RouteComponent | undefined;
+  if (rootLayout) {
+    layouts.push(rootLayout);
+  }
+
+  // nested directories: "home", "home/blog", ...
+  let current = '';
+  for (const segment of segments) {
+    current = current ? `${current}/${segment}` : segment;
+    const layer = layersByDir[current];
+    const layout = layer?.layout as RouteComponent | undefined;
+    if (layout) {
+      layouts.push(layout);
+    }
+  }
+
+  return layouts;
 }
 
 function resolveMeta(
@@ -167,15 +218,26 @@ function createClientRouterComponent(
       }
     };
 
-    return (
-      <RouterView>
-        <SafeRoute
+    const layouts = getLayoutChainForRoute(router, routeName);
+
+    const content = layouts.reduceRight<Child>(
+      (child, Layout) => (
+        <Layout
           params={state.params ?? {}}
           search={state.search ?? {}}
           hash={state.hash ?? ''}
-        />
-      </RouterView>
+        >
+          {child}
+        </Layout>
+      ),
+      <SafeRoute
+        params={state.params ?? {}}
+        search={state.search ?? {}}
+        hash={state.hash ?? ''}
+      />,
     );
+
+    return <RouterView>{content}</RouterView>;
   };
 
   return ClientRouter;

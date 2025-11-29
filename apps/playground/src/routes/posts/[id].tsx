@@ -4,14 +4,20 @@ type PostProps = {
   id: string;
 };
 
-export default createRouteComponent<PostProps>(function PostPage({
-  c,
+const PostsDetailsPage = createRouteComponent<PostProps>(function PostPage({
   params,
 }) {
   return (
     <div>
       <h1>Post {params.id}</h1>
-      <p>Method: {c?.req.method}</p>
     </div>
   );
 });
+
+PostsDetailsPage.meta = ({ params }) => {
+  return {
+    title: `Posts - ${params.id}`,
+  };
+};
+
+export default PostsDetailsPage;
