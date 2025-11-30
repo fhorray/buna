@@ -1,6 +1,12 @@
 import type { UserConfig as ViteUserConfig } from 'vite'
 
+export type BunaRuntime = 'cloudflare' | 'node';
+
 export type BunaConfig = {
+  /**
+   * Default: "cloudflare"
+   */
+  // runtime?: BunaRuntime;
   /**
    * Relative path (from project root) to the routes directory
    * Example: 'src/routes'
@@ -57,6 +63,7 @@ export type BunaConfig = {
 }
 
 export type ResolvedBunaConfig = {
+  // runtime: BunaRuntime;
   routesDir: string
   serverDir: string
   outputClient: string

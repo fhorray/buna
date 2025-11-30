@@ -6,6 +6,7 @@ import { config as router } from '#router';
 import { withSSR } from '@buna/router';
 import api from './api';
 import { RouterView } from '@/shell';
+
 const app = new Hono();
 
 app.use(

@@ -29,7 +29,7 @@ export const DevtoolsDock: FC<DevtoolsDockProps> = ({
         <button
           type="button"
           onClick={() => onOpenChange(true)}
-          class="fixed top-1/2 -translate-y-1/2 z-99998 flex items-center justify-center
+          class="fixed top-1/2 -translate-y-1/2 z-99996 flex items-center justify-center
            w-6 h-12 rounded-l-full border border-slate-700 bg-slate-900
            text-slate-200 shadow-[0_0_12px_rgba(0,0,0,0.4)] cursor-pointer
            hover:bg-slate-800 hover:border-slate-600 transition-colors"

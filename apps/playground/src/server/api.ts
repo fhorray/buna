@@ -22,11 +22,24 @@ api.get("/todo/:id", async c => {
   }
 
   const data = await res.json();
-  console.log(data);
 
   await sleep(3000);
 
   return c.json({ data });
 });
+
+api.get("/admins", async c => {
+  return c.json({
+    data: [
+      {
+        id: "1",
+        name: "Francy Santos",
+        email: "francy@email.com"
+      }
+    ]
+  })
+})
+
+
 
 export default api

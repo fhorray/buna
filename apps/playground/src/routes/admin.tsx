@@ -5,23 +5,21 @@ const AdminPage = CreateComponent('/admin', ({ params, search, hash }) => {
   const [showDebug, setShowDebug] = useState(false);
 
   return (
-    <div className="h-full bg-[#020617] text-slate-100 flex items-center justify-center px-6">
+    <div className="h-full  bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
       <section className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/40 p-6 space-y-4">
         <header className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
             Buna() Route
           </p>
-          <h1 className="text-xl font-semibold text-slate-50">
-            AdminPage
-          </h1>
+          <h1 className="text-xl font-semibold text-slate-50">AdminPage</h1>
           <p className="text-[12px] text-slate-400">
-            This page was scaffolded by Buna Devtools. Start editing it at
-            {' '}
-            <code className="font-mono text-[11px] text-slate-300">src/routes/admin.tsx</code>.
+            This page was scaffolded by Buna Devtools. Start editing it at{' '}
+            <code className="font-mono text-[11px] text-slate-300">
+              src/routes/admin.tsx
+            </code>
+            .
           </p>
         </header>
-
-       
 
         <button
           type="button"

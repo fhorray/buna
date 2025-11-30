@@ -1,0 +1,53 @@
+import { CreateComponent } from '@buna/router';
+import { useState } from 'hono/jsx';
+
+const UsersIdPage = CreateComponent(
+  '/users/[id]',
+  ({ params, search, hash }) => {
+    const [showDebug, setShowDebug] = useState(false);
+
+    return (
+      <div className="h-full  bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
+        <section className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/40 p-6 space-y-4">
+          <header className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+              Buna() Route
+            </p>
+            <h1 className="text-xl font-semibold text-slate-50">UsersIdPage</h1>
+            <p className="text-[12px] text-slate-400">
+              This page was scaffolded by Buna Devtools. Start editing it at{' '}
+              <code className="font-mono text-[11px] text-slate-300">
+                src/routes/users/[id].tsx
+              </code>
+              .
+            </p>
+          </header>
+
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/20 transition-colors"
+            onClick={() => setShowDebug((v) => !v)}
+          >
+            {showDebug ? 'Hide debug' : 'Show debug'}
+          </button>
+
+          {showDebug && (
+            <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-slate-950/70 p-3 text-[11px] text-slate-200">
+              {JSON.stringify({ params, search, hash }, null, 2)}
+            </pre>
+          )}
+        </section>
+      </div>
+    );
+  },
+);
+
+UsersIdPage.meta = ({ params }) => {
+  return {
+    title: 'UsersIdPage – Buna Playground',
+    description: 'Scaffolded page created by Buna Devtools.',
+    keywords: ['buna', 'devtools', 'UsersIdPage', 'route'],
+  };
+};
+
+export default UsersIdPage;

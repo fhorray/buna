@@ -16,6 +16,7 @@
         "@buna/router": "workspace:*",
         "@nanostores/react": "^1.0.0",
         "@nanostores/router": "^1.0.0",
+        "@tailwindcss/vite": "^4.1.17",
         "hono": "^4.10.7",
         "nanostores": "^1.1.0",
         "tailwindcss": "^4.1.17",
@@ -25,6 +26,7 @@
         "@buna/config": "workspace:*",
         "@buna/devtools": "workspace:*",
         "@cloudflare/vite-plugin": "^1.15.3",
+        "@hono/vite-build": "^1.8.0",
         "@types/node": "^24.10.1",
         "vite": "^7.2.4",
         "vite-ssr-components": "^0.5.1",
@@ -57,6 +59,7 @@
         "vite-ssr-components": "^0.5.1",
       },
       "peerDependencies": {
+        "@hono/vite-build": "^1.8.0",
         "@hono/vite-dev-server": "^0.23.0",
         "hono": "^4.0.0",
         "vite": "^7.2.4",
@@ -241,6 +244,8 @@
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.12", "", { "os": "win32", "cpu": "x64" }, "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA=="],
 
     "@hono/node-server": ["@hono/node-server@1.19.6", "", { "peerDependencies": { "hono": "^4" } }, "sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw=="],
+
+    "@hono/vite-build": ["@hono/vite-build@1.8.0", "", { "peerDependencies": { "hono": "*" } }, "sha512-T/w0Tuv8VV6FgjNnw2aW6LXtRfc5tOhaO54tKCRv4Zqc1tP3w6JyqTFtzJFFDvmY0xTxHS+Pj+ZPLhzFsdiFzQ=="],
 
     "@hono/vite-dev-server": ["@hono/vite-dev-server@0.23.0", "", { "dependencies": { "@hono/node-server": "^1.14.2", "minimatch": "^9.0.3" }, "peerDependencies": { "hono": "*", "miniflare": "*", "wrangler": "*" }, "optionalPeers": ["miniflare", "wrangler"] }, "sha512-tHV86xToed9Up0j/dubQW2PDP4aYNFDSfQrjcV6Ra7bqCGrxhtg/zZBmbgSco3aTxKOEPzDXKK+6seAAfsbIXw=="],
 

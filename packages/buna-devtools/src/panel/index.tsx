@@ -22,7 +22,6 @@ import { monoClass } from './utils';
 type DevtoolsTab = 'router' | 'queries' | 'mutations' | 'logs';
 
 export const BunaDevtoolsPanel: FC = () => {
-  // Agora usamos o atom persistente como "isOpen"
   const isOpen = useQuery($devtoolsEnabled);
 
   const router = useQuery($router);

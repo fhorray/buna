@@ -11,6 +11,11 @@
       "persistent": true,
       "cache": false
     },
+    "start": {
+      "persistent": true,
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
     "deploy": {
       "persistent": true,
       "dependsOn": ["^build"],

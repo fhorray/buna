@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin, ResolvedConfig } from 'vite'
 import type { BunaConfig, ResolvedBunaConfig, } from "@buna/config"
+import type { BunaRuntime } from '@buna/config'
 
 const DEFAULT_ROUTES_DIR = 'src/routes'
 const DEFAULT_SERVER_DIR = 'src/server'
@@ -37,7 +38,8 @@ function resolveOptions(opts: BunaConfig = {}): ResolvedBunaConfig {
     outputQuery: opts.outputQuery ?? DEFAULT_OUTPUT_QUERY,
     apiBasePath: opts.apiBasePath ?? DEFAULT_API_PATH,
     outputTypes: opts.outputTypes ?? DEFAULT_OUTPUT_TYPES,
-    vite: opts.vite ?? {}
+    vite: opts.vite ?? {},
+    // runtime: opts.runtime as BunaRuntime
   };
 }
 
@@ -758,7 +760,7 @@ const ${props.componentName} = CreateComponent('${props.routePath}', ({ params, 
   const [showDebug, setShowDebug] = useState(false);
 
   return (
-    <div className="h-full bg-[#020617] text-slate-100 flex items-center justify-center px-6">
+    <div className="h-full  bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
       <section className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/40 p-6 space-y-4">
         <header className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
