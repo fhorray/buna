@@ -1,8 +1,33 @@
+import { api } from '#api';
+import { useQuery } from '@buna/react';
 import { CreateComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
 
+const $usersList = api.users.list;
+const $users = api.users;
+
 const UsersPage = CreateComponent('/users', ({ params, search, hash }) => {
   const [showDebug, setShowDebug] = useState(false);
+
+  const { loading, data } = useQuery($usersList);
+  const create = useQuery($users.create);
+
+  const handleCreateUser = () => {
+    create.mutate({
+      id: 123,
+      name: 'Francy Santos',
+    });
+  };
+
+  if (loading) {
+    return <>loading...</>;
+  }
+
+  if (typeof window !== undefined) {
+    console.log(data);
+  }
+
+  console.log(data);
 
   return (
     <div className="h-full  bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
@@ -48,39 +73,18 @@ const UsersPage = CreateComponent('/users', ({ params, search, hash }) => {
 
         <button
           type="button"
-          class="inline-flex items-center rounded-md border border-emerald-400/60 px-2 py-[2px] text-[10px] font-semibold text-emerald-100 hover:bg-emerald-500/15 transition-colors"
-          onClick={async () => {
-            try {
-              // success = Created: /users
-              // se você quer guardar o path limpo, pode armazenar separado.
-              const pathMatch = success.match(/Created:s*(.+)$/);
-              const routePath = pathMatch ? pathMatch[1] : null;
-
-              if (!routePath) {
-                alert('Could not detect created route path.');
-                return;
-              }
-
-              await fetch('/__buna/devtools/open-route', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path: routePath }),
-              });
-            } catch (err) {
-              console.error('[Devtools] open-route error', err);
-              alert('Failed to open file in editor.');
-            }
-          }}
+          className="inline-flex items-center justify-center rounded-md border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/20 transition-colors"
+          onClick={() => setShowDebug((v) => !v)}
         >
-          Edit
+          {showDebug ? 'Hide debug' : 'Show debug'}
         </button>
 
         <button
           type="button"
           className="inline-flex items-center justify-center rounded-md border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/20 transition-colors"
-          onClick={() => setShowDebug((v) => !v)}
+          onClick={handleCreateUser}
         >
-          {showDebug ? 'Hide debug' : 'Show debug'}
+          Get User
         </button>
 
         {showDebug && (

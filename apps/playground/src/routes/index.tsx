@@ -1,12 +1,7 @@
+'use client';
+
 import { CreateComponent } from '@buna/router';
 import { useState } from 'hono/jsx';
-
-type AboutParams = {
-  dataAbout: 'test about';
-}; // no dynamic params
-type AboutSearch = {
-  dataSearch: 'test search';
-}; // no specific search schema
 
 export default CreateComponent('/', (props) => {
   const [count, setCount] = useState(0);

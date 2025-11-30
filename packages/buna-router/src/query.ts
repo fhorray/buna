@@ -1,12 +1,10 @@
 import { KeySelector, nanoquery } from '@nanostores/query';
-import type { ReadableAtom } from 'nanostores';
 
 import {
   $devtoolsEnabled,
-  devtoolsKeyToId,
-  upsertQuerySnapshot,
   appendLog,
-  upsertMutationSnapshot,
+  devtoolsKeyToId,
+  upsertQuerySnapshot
 } from '@buna/devtools';
 
 const [
@@ -96,7 +94,8 @@ export const {
   mutateCache,
 } = baseHelpers;
 
-// 🔥 Helpers "amigáveis" pro Devtools
+
+// Helpers for devtools
 export function invalidateQuery(keyParts: unknown[]): void {
   const [method, path] = keyParts as [string, string, ...unknown[]];
 

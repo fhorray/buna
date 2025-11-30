@@ -217,17 +217,18 @@ function normalizeNestedRouteName(
 }
 
 // --- UI COMPONENTS ---
-
 type RouteAccordionItemProps = {
   node: RouteNode;
   depth: number;
   onCreateSubroute?: (node: RouteNode) => void;
+  onGenerateCrud?: (node: RouteNode) => void;
 };
 
 const RouteAccordionItem: FC<RouteAccordionItemProps> = ({
   node,
   depth,
   onCreateSubroute,
+  onGenerateCrud,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
   const hasChildren = node.children.length > 0;
@@ -335,7 +336,21 @@ const RouteAccordionItem: FC<RouteAccordionItemProps> = ({
             <PencilIcon class="w-3 h-3" />
           </button>
 
-          {/* Botão para criar subrota dentro desse nó */}
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-md border border-indigo-500/60 bg-indigo-500/10 text-[10px] px-2 py-1 text-indigo-100 hover:bg-indigo-500/25transition-colors cursor-pointer"
+            title={`Generate CRUD & services for ${node.fullPath}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (onGenerateCrud) {
+                void onGenerateCrud(node);
+              }
+            }}
+          >
+            <span class="font-semibold tracking-widest uppercase">CRUD</span>
+          </button>
+
+          {/* Create subroute button */}
           <button
             type="button"
             class="inline-flex items-center justify-center rounded-md border border-sky-500/70 bg-sky-500/10 p-2 text-[10px] text-sky-100 hover:bg-sky-500/25 transition-colors cursor-pointer"
@@ -361,6 +376,7 @@ const RouteAccordionItem: FC<RouteAccordionItemProps> = ({
               node={child}
               depth={depth + 1}
               onCreateSubroute={onCreateSubroute}
+              onGenerateCrud={onGenerateCrud}
             />
           ))}
         </ul>
@@ -372,11 +388,13 @@ const RouteAccordionItem: FC<RouteAccordionItemProps> = ({
 type RouteTreeAccordionProps = {
   nodes: RouteNode[];
   onCreateSubroute?: (node: RouteNode) => void;
+  onGenerateCrud?: (node: RouteNode) => void;
 };
 
 const RouteTreeAccordion: FC<RouteTreeAccordionProps> = ({
   nodes,
   onCreateSubroute,
+  onGenerateCrud,
 }) => {
   if (!nodes.length) {
     return (
@@ -392,6 +410,7 @@ const RouteTreeAccordion: FC<RouteTreeAccordionProps> = ({
           node={node}
           depth={0}
           onCreateSubroute={onCreateSubroute}
+          onGenerateCrud={onGenerateCrud}
         />
       ))}
     </ul>
@@ -440,7 +459,10 @@ export const RouterTab: FC<RouterTabProps> = ({ router }) => {
   const routesTree = buildRouteTree(router.routes || {});
   const totalRoutes = Object.keys(router.routes || {}).length;
 
-  async function scaffoldRoute(path: string, name: string): Promise<void> {
+  async function handleScaffoldRoute(
+    path: string,
+    name: string,
+  ): Promise<void> {
     setIsScaffolding(true);
     setError(null);
     setSuccess(null);
@@ -483,7 +505,7 @@ export const RouterTab: FC<RouterTabProps> = ({ router }) => {
     }
 
     const { fileName, componentName } = normalizeRouteName(input);
-    await scaffoldRoute(fileName, componentName);
+    await handleScaffoldRoute(fileName, componentName);
   }
 
   async function handleCreateSubroute(parent: RouteNode) {
@@ -496,7 +518,44 @@ export const RouterTab: FC<RouterTabProps> = ({ router }) => {
     }
 
     const { fileName, componentName } = normalizeNestedRouteName(parent, input);
-    await scaffoldRoute(fileName, componentName);
+    await handleScaffoldRoute(fileName, componentName);
+  }
+
+  async function handleGenerateCrud(node: RouteNode) {
+    try {
+      setIsScaffolding(true);
+      setError(null);
+      setSuccess(null);
+
+      const res = await fetch('/__buna/devtools/scaffold-crud', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          routePath: node.fullPath,
+          // se quiser permitir customizar via prompt:
+          // resourceName: prompt('Resource name (default from route):') || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error ?? 'Scaffold CRUD failed');
+      }
+
+      setSuccess(
+        `CRUD generated: ${data.moduleFile} & ${data.serviceFile} (and api.ts patched)`,
+      );
+    } catch (err: any) {
+      console.error('[Devtools] scaffold-crud error', err);
+      setError(err?.message ?? 'Unknown error');
+    } finally {
+      setIsScaffolding(false);
+    }
   }
 
   return (
@@ -542,6 +601,7 @@ export const RouterTab: FC<RouterTabProps> = ({ router }) => {
           <RouteTreeAccordion
             nodes={routesTree}
             onCreateSubroute={handleCreateSubroute}
+            onGenerateCrud={handleGenerateCrud}
           />
         </div>
 

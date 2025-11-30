@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": [
-      "hono/jsx"
+      "hono/jsx",
+      "vite/client"
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",

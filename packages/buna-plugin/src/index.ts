@@ -43,6 +43,30 @@ function resolveOptions(opts: BunaConfig = {}): ResolvedBunaConfig {
   };
 }
 
+function resolveModuleFile(apiDir: string, importSource: string): string | null {
+  // Base path built from the imported path (may not contain extension)
+  const basePath = path.resolve(apiDir, importSource);
+
+  // Candidates: handle .ts, .tsx, .js, .mjs, .cjs and direct file
+  const candidates = [
+    basePath,
+    basePath + '.ts',
+    basePath + '.tsx',
+    basePath + '.js',
+    basePath + '.mjs',
+    basePath + '.cjs',
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  // If nothing was found, return null so caller can decide what to do
+  return null;
+}
+
 // Helper to write files
 function writeFileSafe(projectRoot: string, relPath: string, content: string) {
   const fullPath = path.resolve(projectRoot, relPath)
@@ -350,6 +374,97 @@ ${bodyLines.join('\n')}
 `;
 }
 
+// PATCH API FILE
+function patchApiFile(options: {
+  projectRoot: string;
+  apiFileRelative: string;
+  resourceSlug: string;
+}) {
+  const { projectRoot, apiFileRelative, resourceSlug } = options;
+  const absApiFile = path.resolve(projectRoot, apiFileRelative);
+
+  if (!fs.existsSync(absApiFile)) {
+    console.warn('[buna devtools] apiFile not found:', absApiFile);
+    return;
+  }
+
+  const importId = `${resourceSlug}Module`;
+  const importPath = `./modules/${resourceSlug}.module`;
+  const routeLine = `api.route('/${resourceSlug}', ${importId});`;
+
+  let content = fs.readFileSync(absApiFile, 'utf-8');
+
+  // já tem import?
+  if (!content.includes(importPath)) {
+    const importLine = `import ${importId} from '${importPath}';\n`;
+
+    const apiIndex = content.indexOf('const api');
+    if (apiIndex !== -1) {
+      content = content.slice(0, apiIndex) + importLine + content.slice(apiIndex);
+    } else {
+      content = importLine + content;
+    }
+  }
+
+  // já tem api.route?
+  if (!content.includes(routeLine)) {
+    const exportIndex = content.lastIndexOf('export default api');
+    if (exportIndex !== -1) {
+      content =
+        content.slice(0, exportIndex) +
+        routeLine +
+        '\n\n' +
+        content.slice(exportIndex);
+    } else {
+      // fallback: só adiciona no final
+      content += `\n${routeLine}\n`;
+    }
+  }
+
+  fs.writeFileSync(absApiFile, content, 'utf-8');
+}
+
+function normalizeResourceSlug(
+  routePath: string,
+  explicitName?: string,
+): string {
+  if (explicitName && explicitName.trim()) {
+    return explicitName.trim().toLowerCase();
+  }
+
+  // Eg: "/posts/:id/comments" => ["posts", ":id", "comments"]
+  const segments = routePath
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // get last segment that is not a param
+  let lastStatic =
+    [...segments].reverse().find((s) => !s.startsWith(':')) ?? 'resource';
+
+  lastStatic = lastStatic.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+
+  if (!lastStatic) {
+    return 'resource';
+  }
+
+  return lastStatic;
+}
+
+function toPascalCase(input: string): string {
+  return input
+    .split(/[-_]/g)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+}
+
+function singularize(slug: string): string {
+  if (slug.endsWith('ies')) return slug.slice(0, -3) + 'y';
+  if (slug.endsWith('s')) return slug.slice(0, -1);
+  return slug;
+}
+
 // Helper to decide operation name
 function getOperationName(
   method: string,
@@ -642,6 +757,97 @@ export function buna(options: BunaConfig = {}): Plugin {
         },
       );
 
+      server.middlewares.use(
+        '/__buna/devtools/scaffold-crud',
+        (req, res, next) => {
+          if (req.method !== 'POST') {
+            return next();
+          }
+
+          const chunks: Buffer[] = [];
+
+          req.on('data', (chunk) => {
+            chunks.push(chunk);
+          });
+
+          req.on('end', () => {
+            try {
+              const raw = Buffer.concat(chunks).toString('utf-8');
+              const payload = raw ? JSON.parse(raw) : {};
+
+              // Ex: "/users", "/posts/:id"
+              const routePath: string = payload.routePath || '/resource';
+              const explicitName: string | undefined = payload.resourceName;
+
+              const resourceSlug = normalizeResourceSlug(routePath, explicitName);
+              const pascalName = toPascalCase(singularize(resourceSlug));
+
+              const projectRoot = viteConfig.root;
+              const serverDirAbs = path.resolve(projectRoot, resolved.serverDir);
+              const servicesDir = path.join(serverDirAbs, 'services');
+              const modulesDir = path.join(serverDirAbs, 'modules');
+
+              fs.mkdirSync(servicesDir, { recursive: true });
+              fs.mkdirSync(modulesDir, { recursive: true });
+
+              const serviceFile = path.join(
+                servicesDir,
+                `${resourceSlug}.service.ts`,
+              );
+              const moduleFile = path.join(
+                modulesDir,
+                `${resourceSlug}.module.ts`,
+              );
+
+              if (!fs.existsSync(serviceFile)) {
+                fs.writeFileSync(
+                  serviceFile,
+                  createServiceTemplate({ pascalName, resourceSlug }),
+                  'utf-8',
+                );
+              }
+
+              if (!fs.existsSync(moduleFile)) {
+                fs.writeFileSync(
+                  moduleFile,
+                  createModuleTemplate({ pascalName, resourceSlug }),
+                  'utf-8',
+                );
+              }
+
+              patchApiFile({
+                projectRoot,
+                apiFileRelative: resolved.apiFile,
+                resourceSlug,
+              });
+
+              // Se quiser regenerar .buna também:
+              // generateAll(projectRoot, resolved);
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  ok: true,
+                  serviceFile: path.relative(projectRoot, serviceFile),
+                  moduleFile: path.relative(projectRoot, moduleFile),
+                }),
+              );
+            } catch (err: any) {
+              console.error('[buna devtools scaffold-crud] error:', err);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  ok: false,
+                  error: String(err?.message ?? err),
+                }),
+              );
+            }
+          });
+        },
+      );
+
       const routesDirAbs = path.resolve(projectRoot, resolved.routesDir);
       const serverDirAbs = path.resolve(projectRoot, resolved.serverDir);
 
@@ -683,6 +889,7 @@ export type ApiRouteMeta = {
 };
 
 
+// READ API FILE
 export function readApiRoutes(
   projectRoot: string,
   apiFile: string,
@@ -698,13 +905,7 @@ export function readApiRoutes(
 
   const routes: ApiRouteMeta[] = [];
 
-  // qualquer IDENT.get('/path'), api.get('/demo'), router.post('/login'), etc
-  const regex =
-    /\b([A-Za-z_$][\w$]*)\s*\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]+)['"`]/gi;
-
-  let match: RegExpExecArray | null;
-
-  // normaliza base: '/api/' ou '/' etc
+  // Normalize API base path: '/', '/api', '/api/'
   const base =
     apiBasePath === '/'
       ? ''
@@ -712,22 +913,132 @@ export function readApiRoutes(
         ? apiBasePath.slice(0, -1)
         : apiBasePath;
 
-  while ((match = regex.exec(code)) != null) {
-    const method = match[2].toUpperCase() as HttpMethod;
-    const routePath = match[3]; // '/demo', '/posts/:id', etc.
+  // 1) Direct routes declared in api.ts using .get/.post/.put/.patch/.delete
+  const directRegex =
+    /\b([A-Za-z_$][\w$]*)\s*\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]+)['"`]/gi;
 
-    // garante que o path comece com '/'
+  let match: RegExpExecArray | null;
+
+  while ((match = directRegex.exec(code)) != null) {
+    const method = match[2].toUpperCase() as HttpMethod;
+    const routePath = match[3]; // e.g. '/demo', '/posts/:id'
+
+    // Ensure route starts with '/'
     const cleanRoute =
       routePath.startsWith('/') ? routePath : '/' + routePath;
 
-    // aplica o prefixo da API: '/api' + '/demo' => '/api/demo'
-    const fullRoute =
-      base + cleanRoute; // se base = '' => fica só '/demo'
+    // Apply API base prefix: '/api' + '/demo' => '/api/demo'
+    const fullRoute = base + cleanRoute;
 
     routes.push({ method, path: fullRoute });
   }
 
+  // 2) Collect default imports from relative modules
+  //    Example: import usersModule from './modules/users.module';
+  const importRegex =
+    /import\s+([A-Za-z_$][\w$]*)\s+from\s+['"`]([^'"`]+)['"`]\s*;?/g;
+
+  const apiDir = path.dirname(fullPath);
+  const moduleImportMap = new Map<string, string>(); // identifier -> absolute file path
+
+  while ((match = importRegex.exec(code)) != null) {
+    const importName = match[1];   // e.g. usersModule
+    const importSource = match[2]; // e.g. './modules/users.module'
+
+    // Ignore library imports, only care about relative paths
+    if (!importSource.startsWith('.')) {
+      continue;
+    }
+
+    // Try to resolve the real module file on disk (handles missing extensions)
+    const absModulePath = resolveModuleFile(apiDir, importSource);
+
+    if (!absModulePath) {
+      // Optional: log once if a module cannot be resolved
+      // console.warn('[buna-plugin] Could not resolve module for import:', importSource);
+      continue;
+    }
+
+    moduleImportMap.set(importName, absModulePath);
+  }
+
+  // 3) Find api.route('/base', moduleIdentifier) calls
+  //    Example: api.route('/users', usersModule);
+  const routeRegex =
+    /\b([A-Za-z_$][\w$]*)\s*\.route\(\s*['"`]([^'"`]+)['"`]\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
+
+  while ((match = routeRegex.exec(code)) != null) {
+    // const apiIdent = match[1]; // usually "api", but we don't need it here
+    const routeBasePath = match[2];  // e.g. '/users'
+    const moduleIdent = match[3];    // e.g. 'usersModule'
+
+    const moduleFile = moduleImportMap.get(moduleIdent);
+    if (!moduleFile) {
+      // Module not imported as a default local file, skip it
+      continue;
+    }
+
+    // Normalize base route (no trailing slash)
+    let baseRoute =
+      routeBasePath.startsWith('/') ? routeBasePath : '/' + routeBasePath;
+    baseRoute = baseRoute.replace(/\/+$/, ''); // remove trailing slashes
+    if (baseRoute === '') baseRoute = '/';
+
+    // Read routes inside the module file (GET/POST/PUT/PATCH/DELETE)
+    readModuleRoutes(moduleFile, base, baseRoute, routes);
+  }
+
   return routes;
+}
+
+function readModuleRoutes(
+  moduleFile: string,
+  apiBase: string,
+  routeBase: string,
+  routes: ApiRouteMeta[],
+) {
+  if (!fs.existsSync(moduleFile)) {
+    return;
+  }
+
+  const code = fs.readFileSync(moduleFile, 'utf-8');
+
+  // Match any "xxx.get('/path')" or "xxx.post('/path')" style calls
+  const regex =
+    /\b([A-Za-z_$][\w$]*)\s*\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]+)['"`]/gi;
+
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(code)) != null) {
+    const method = match[2].toUpperCase() as HttpMethod;
+    const localPath = match[3]; // e.g. '/', '/:id', '/comments/:id'
+
+    // Normalize local path inside the module
+    let normalizedLocal =
+      localPath.startsWith('/') ? localPath : '/' + localPath;
+
+    // Combine module base route with local path
+    // Examples:
+    //   routeBase = '/users', normalizedLocal = '/'    => '/users'
+    //   routeBase = '/users', normalizedLocal = '/:id' => '/users/:id'
+    let combined: string;
+    if (normalizedLocal === '/' || normalizedLocal === '') {
+      combined = routeBase;
+    } else {
+      combined = routeBase + normalizedLocal;
+    }
+
+    // Normalize duplicate slashes and ensure it starts with '/'
+    combined = combined.replace(/\/+/g, '/');
+    if (!combined.startsWith('/')) {
+      combined = '/' + combined;
+    }
+
+    // Apply API base: '/api' + '/users/:id' => '/api/users/:id'
+    const fullRoute = apiBase + combined;
+
+    routes.push({ method, path: fullRoute });
+  }
 }
 
 /**
@@ -806,3 +1117,124 @@ ${props.componentName}.meta = ({ params }) => {
 
 export default ${props.componentName};
 `;
+
+
+// SERVICE TEMPLATE
+type CrudTemplateContext = {
+  pascalName: string;  // "User"
+  resourceSlug: string; // "users"
+};
+
+function createServiceTemplate(ctx: CrudTemplateContext): string {
+  const { pascalName, resourceSlug } = ctx;
+  const entityName = pascalName;
+  const collectionName = resourceSlug;
+
+  return `// AUTO-GENERATED BY buna-plugin.
+// You can freely edit this file.
+
+export type ${entityName} = {
+  id: string;
+  // TODO: add more fields here
+};
+
+let ${collectionName}: ${entityName}[] = [];
+
+export async function list${entityName}s(): Promise<${entityName}[]> {
+  return ${collectionName};
+}
+
+export async function get${entityName}ById(id: string): Promise<${entityName} | null> {
+  return ${collectionName}.find((item) => item.id === id) ?? null;
+}
+
+export async function create${entityName}(data: Partial<${entityName}>): Promise<${entityName}> {
+  const item: ${entityName} = {
+    id: String(Date.now()),
+    ...data,
+  } as ${entityName};
+
+  ${collectionName}.push(item);
+  return item;
+}
+
+export async function update${entityName}(id: string, data: Partial<${entityName}>): Promise<${entityName} | null> {
+  const index = ${collectionName}.findIndex((item) => item.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...${collectionName}[index], ...data } as ${entityName};
+  ${collectionName}[index] = updated;
+  return updated;
+}
+
+export async function delete${entityName}(id: string): Promise<boolean> {
+  const before = ${collectionName}.length;
+  ${collectionName} = ${collectionName}.filter((item) => item.id !== id);
+  return ${collectionName}.length < before;
+}
+`;
+}
+
+
+// MODULE TEMPLATE
+function createModuleTemplate(ctx: CrudTemplateContext): string {
+  const { pascalName, resourceSlug } = ctx;
+  const entityName = pascalName;
+  const serviceImportId = `${resourceSlug}Service`;
+  const moduleConst = `${resourceSlug}Module`;
+
+  return `// AUTO-GENERATED BY buna-plugin.
+// Basic CRUD Hono module for "${resourceSlug}"
+
+import { Hono } from 'hono';
+import * as ${serviceImportId} from '../services/${resourceSlug}.service';
+
+const ${moduleConst} = new Hono();
+
+// GET /${resourceSlug}
+${moduleConst}.get('/', async (c) => {
+  const items = await ${serviceImportId}.list${entityName}s();
+  return c.json({ data: items });
+});
+
+// GET /${resourceSlug}/:id
+${moduleConst}.get('/:id', async (c) => {
+  const id = c.req.param('id');
+  const item = await ${serviceImportId}.get${entityName}ById(id);
+  if (!item) {
+    return c.json({ error: '${entityName} not found' }, 404);
+  }
+  return c.json({ data: item });
+});
+
+// POST /${resourceSlug}
+${moduleConst}.post('/', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const created = await ${serviceImportId}.create${entityName}(body);
+  return c.json({ data: created }, 201);
+});
+
+// PUT /${resourceSlug}/:id
+${moduleConst}.put('/:id', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => ({}));
+  const updated = await ${serviceImportId}.update${entityName}(id, body);
+  if (!updated) {
+    return c.json({ error: '${entityName} not found' }, 404);
+  }
+  return c.json({ data: updated });
+});
+
+// DELETE /${resourceSlug}/:id
+${moduleConst}.delete('/:id', async (c) => {
+  const id = c.req.param('id');
+  const ok = await ${serviceImportId}.delete${entityName}(id);
+  if (!ok) {
+    return c.json({ error: '${entityName} not found' }, 404);
+  }
+  return c.json({ ok: true });
+});
+
+export default ${moduleConst};
+`;
+}
