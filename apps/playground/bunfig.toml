@@ -4,4 +4,4 @@ plugins = ["bun-plugin-tailwind", "./my-plugin.ts"]
 env = "BUN_PUBLIC_*"
 
 [entrypoints]
-server = "src/server/index.ts"
+server = "src/entry.ts"

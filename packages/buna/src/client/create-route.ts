@@ -21,8 +21,41 @@ export type RouteComponent<C = RouteContext> = ((
 };
 
 /**
+ * Parse dynamic route parameters based on a pattern like:
+ *   "/blog/:id" or "/docs/*"
+ */
+function parseParamsFromPattern(pathname: string, pattern: string): Record<string, string> {
+  const params: Record<string, string> = {};
+
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const patternSegments = pattern.split("/").filter(Boolean);
+
+  for (let i = 0; i < patternSegments.length; i++) {
+    const pat = patternSegments[i];
+    const value = pathSegments[i];
+
+    if (!pat) continue;
+
+    if (pat === "*") {
+      params["*"] = pathSegments.slice(i).join("/");
+      break;
+    }
+
+    if (pat.startsWith(":")) {
+      const key = pat.slice(1);
+      if (key) {
+        params[key] = value ?? "";
+      }
+    }
+  }
+
+  return params;
+}
+
+/**
  * Build RouteContext from the current browser URL.
- * You can replace this later with your router logic for params, etc.
+ * Uses the route pattern injected into the HTML by the generator
+ * (via <body data-buna-route="...">) to populate params.
  */
 function getClientRouteContext(): RouteContext {
   if (typeof window === "undefined") return {};
@@ -31,8 +64,15 @@ function getClientRouteContext(): RouteContext {
   const searchParams = url.searchParams;
   const hash = url.hash || undefined;
 
-  // TODO: integrate real dynamic route params here
-  const params: Record<string, string> = {};
+  let pattern: string | undefined;
+  if (typeof document !== "undefined") {
+    pattern = document.body.getAttribute("data-buna-route") || undefined;
+  }
+
+  const params =
+    pattern && pattern !== url.pathname
+      ? parseParamsFromPattern(url.pathname, pattern)
+      : {};
 
   return { params, searchParams, hash };
 }

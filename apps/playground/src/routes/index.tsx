@@ -53,7 +53,6 @@ const AboutPage = createRoute((ctx: RouteContext) => {
   );
 });
 
-// Versão com meta estático (objeto)
 AboutPage.meta = {
   title: 'About - Buna Playground',
   description: 'Example about page using Buna createRoute.',

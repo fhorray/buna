@@ -1,7 +1,7 @@
 {
   "name": "buna",
   "version": "0.0.0",
-  "module": "server/index.ts",
+  "module": "entry.ts",
   "type": "module",
   "private": true,
   "workspaces": [

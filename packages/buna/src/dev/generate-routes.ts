@@ -27,21 +27,35 @@ function filePathToRoute(pathname: string, routesDir: string): string {
   const withoutExt = rel.replace(/\.(tsx|jsx|ts|js)$/, "");
   const segments = withoutExt.split("/");
 
+  // Special-case root index route
   if (segments.length === 1 && segments[0] === "index") {
     return "/";
   }
 
-  const last = segments[segments.length - 1];
-  if (last === "index") {
-    const base = segments.slice(0, -1).join("/");
-    return "/" + base;
-  }
+  // Treat "*/index" as the directory route (including dynamic segments)
+  const isIndexRoute = segments[segments.length - 1] === "index";
+  const coreSegments = isIndexRoute ? segments.slice(0, -1) : segments;
 
-  const mapped = segments.map(segment =>
-    segment.startsWith("[") && segment.endsWith("]")
-      ? ":" + segment.slice(1, -1)
-      : segment
-  );
+  const mapped = coreSegments.map(segment => {
+    if (segment.startsWith("[") && segment.endsWith("]")) {
+      const inner = segment.slice(1, -1);
+
+      // Support catch-all segments like "[...slug]" -> "*"
+      if (inner.startsWith("...")) {
+        return "*";
+      }
+
+      // "[id]" -> ":id"
+      return ":" + inner;
+    }
+
+    return segment;
+  });
+
+  // If everything collapsed (e.g. "index" only), this is "/"
+  if (mapped.length === 0) {
+    return "/";
+  }
 
   return "/" + mapped.join("/");
 }
@@ -80,7 +94,7 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
     <title>${routePath}</title>
     <link rel="stylesheet" href="tailwindcss" />
   </head>
-  <body>
+  <body data-buna-route="${routePath}">
     <div id="root"></div>
     <script type="module" src="${scriptSrc}"></script>
   </body>

@@ -16,6 +16,6 @@
     ".buna",
     "buna.config.ts",
     "types"
-  ],
+, "index.ts"  ],
   "exclude": ["dist", "node_modules"]
 }
