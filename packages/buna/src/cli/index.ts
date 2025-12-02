@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { generateRoutes } from "../dev/generate-routes";
-import type { BunaConfig } from "../runtime/types";
+import type { BunaConfig } from "../config/types";
 
 async function loadConfig(configFile: string): Promise<BunaConfig> {
   const configPath = resolve(process.cwd(), configFile);

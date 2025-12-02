@@ -105,9 +105,18 @@ async function attachProcess(
   ) => {
     if (!stream) return;
     const decoder = new TextDecoder();
-    for await (const chunk of stream) {
-      const text = decoder.decode(chunk);
-      const lines = text.split(/\r?\n/);
+    const reader = stream.getReader();
+    let pending = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      pending += decoder.decode(value, { stream: true });
+      const lines = pending.split(/\r?\n/);
+      pending = lines.pop() ?? "";
+
       for (const line of lines) {
         if (!line.trim()) continue;
         const prefix = isError ? "{red-fg}[stderr]{/} " : "";
@@ -118,6 +127,17 @@ async function attachProcess(
       }
       onUpdate();
     }
+
+    if (pending.trim()) {
+      const prefix = isError ? "{red-fg}[stderr]{/} " : "";
+      app.logs.push(prefix + pending);
+      if (app.logs.length > MAX_LOG_LINES) {
+        app.logs.splice(0, app.logs.length - MAX_LOG_LINES);
+      }
+      onUpdate();
+    }
+
+    reader.releaseLock();
   };
 
   // background read

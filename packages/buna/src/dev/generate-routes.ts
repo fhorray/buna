@@ -1,6 +1,6 @@
+import { ResolvedBunaConfig } from "buna/config/types";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
-import type { BunaConfig } from "../runtime/types";
 
 async function ensureDir(path: string) {
   await mkdir(path, { recursive: true });
@@ -46,7 +46,7 @@ function filePathToRoute(pathname: string, routesDir: string): string {
   return "/" + mapped.join("/");
 }
 
-export async function generateRoutes(config: BunaConfig) {
+export async function generateRoutes(config: ResolvedBunaConfig) {
   const { routesDir, outDir } = config;
 
   const projectRoot = process.cwd();
@@ -78,6 +78,7 @@ export async function generateRoutes(config: BunaConfig) {
 <html>
   <head>
     <title>${routePath}</title>
+    <link rel="stylesheet" href="tailwindcss" />
   </head>
   <body>
     <div id="root"></div>

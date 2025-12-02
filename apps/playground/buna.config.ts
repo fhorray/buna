@@ -1,8 +1,8 @@
-import type { BunaConfig } from "buna";
+import { defineConfig } from "buna";
+import { routes } from "./.buna/routes.generated";
 
-const config: BunaConfig = {
+export default defineConfig({
   routesDir: "src/routes",
-  outDir: ".buna"
-};
-
-export default config;
+  outDir: ".buna",
+  routes
+})

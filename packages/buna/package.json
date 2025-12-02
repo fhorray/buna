@@ -5,6 +5,12 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "buna": "./dist/cli/index.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -13,6 +19,27 @@
     "./dev": {
       "import": "./dist/dev/generate-routes.js",
       "types": "./dist/dev/generate-routes.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli/index.js",
+      "types": "./dist/cli/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "dev": [
+        "dist/dev/generate-routes.d.ts"
+      ],
+      "dev/*": [
+        "dist/dev/*"
+      ],
+      "cli": [
+        "dist/cli/index.d.ts"
+      ],
+      "*": [
+        "dist/*"
+      ]
     }
   },
   "scripts": {
