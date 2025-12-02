@@ -11,6 +11,7 @@
   "scripts": {
     "wkadd": "bash scripts/add.sh",
     "wkrm": "bash scripts/remove.sh",
+    "buna:watch": "bun run --cwd packages/buna watch",
     "dev": "bun run --cwd apps/playground dev"
   },
   "devDependencies": {

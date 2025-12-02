@@ -1,4 +1,4 @@
-import { BunaConfig, ResolvedBunaConfig } from "buna/config/types";
+import type { BunaConfig, ResolvedBunaConfig } from "./types";
 import { resolve } from "node:path";
 
 export function defineConfig(config: BunaConfig): ResolvedBunaConfig {

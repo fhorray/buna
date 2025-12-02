@@ -9,7 +9,10 @@
     "baseUrl": ".",
     "paths": {
       "buna": ["packages/buna/src"],
-      "buna/*": ["packages/buna/src/*"]
+      "buna/*": ["packages/buna/src/*"],
+      "#buna/*": ["apps/playground/.buna/*"],
+      "@/buna.config": ["apps/playground/buna.config.ts"],
+      "@/*": ["apps/playground/*"]
     }
   }
 }

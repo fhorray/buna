@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { createElement } from "react";
 import type { ReactNode } from "react";
 import type { BunaMeta, BunaMetaRobots } from "./types";
 
@@ -327,7 +328,7 @@ export function createRoute<C extends RouteContext = RouteContext>(
       }
 
       const root = createRoot(container);
-      root.render(ComponentWithMeta(ctx));
+      root.render(createElement(ComponentWithMeta, ctx as C));
     });
   }
 

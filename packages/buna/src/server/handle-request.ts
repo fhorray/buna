@@ -1,5 +1,5 @@
 import type { BunaRoute, ResolvedBunaConfig } from "../config/types";
-import { BunaEnv, BunaExecutionContext } from "./types";
+import type { BunaEnv, BunaExecutionContext } from "./types";
 
 
 export async function handleRequest(

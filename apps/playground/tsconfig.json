@@ -7,8 +7,8 @@
     "paths": {
       "@/*": ["./*"],
       "#buna/*": [".buna/*"],
-      "buna": ["../../packages/buna/src"],
-      "buna/*": ["../../packages/buna/src/*"]
+      "buna": [".buna/runtime/index.js"],
+      "buna/*": [".buna/runtime/*"]
     }
   },
   "include": [
