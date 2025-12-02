@@ -1,7 +1,7 @@
 {
   "name": "buna",
   "version": "0.0.0",
-  "module": "index.ts",
+  "module": "server.ts",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -11,7 +11,7 @@
   "scripts": {
     "wkadd": "bash scripts/add.sh",
     "wkrm": "bash scripts/remove.sh",
-    "dev": "bun run scripts/dev.ts"
+    "dev": "bun run --cwd apps/playground dev"
   },
   "devDependencies": {
     "@types/bun": "latest",

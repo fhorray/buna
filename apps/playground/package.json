@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "start": "NODE_ENV=production bun src/index.ts",
+    "buna:codegen": "bun run ../../packages/buna/src/cli/index.ts codegen",
+    "dev": "bun run buna:codegen && bun run --hot src/server.ts",
+    "start": "NODE_ENV=production bun src/server.ts",
     "build": "bun run build.ts"
   },
   "dependencies": {
     "bun-plugin-tailwind": "^0.1.2",
     "react": "^19",
     "react-dom": "^19",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^4.1.11",
+    "buna": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19",
