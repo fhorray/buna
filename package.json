@@ -1,0 +1,26 @@
+{
+  "name": "buna",
+  "version": "0.0.0",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "wkadd": "bash scripts/add.sh",
+    "wkrm": "bash scripts/remove.sh",
+    "dev": "bun run scripts/dev.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "blessed": "^0.1.81"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/blessed": "^0.1.26"
+  }
+}
