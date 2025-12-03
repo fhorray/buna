@@ -21,6 +21,10 @@
       "import": "./src/cli/index.ts",
       "types": "./src/cli/index.ts"
     },
+    "./cli/build": {
+      "import": "./src/cli/build.ts",
+      "types": "./src/cli/build.ts"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -53,6 +57,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "bun-plugin-tailwind": "^0.1.2",
     "typescript": "^5.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",

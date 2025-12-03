@@ -17,7 +17,7 @@
       },
     },
     "apps/playground": {
-      "name": "bun-react-template",
+      "name": "buna-playground",
       "version": "0.1.0",
       "dependencies": {
         "bun-plugin-tailwind": "^0.1.2",
@@ -46,6 +46,7 @@
         "@types/node": "^24.10.1",
         "@types/react": "^19",
         "@types/react-dom": "^19",
+        "bun-plugin-tailwind": "^0.1.2",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "typescript": "^5.0.0",
@@ -97,11 +98,11 @@
 
     "bun-plugin-tailwind": ["bun-plugin-tailwind@0.1.2", "", { "peerDependencies": { "bun": ">=1.0.0" } }, "sha512-41jNC1tZRSK3s1o7pTNrLuQG8kL/0vR/JgiTmZAJ1eHwe0w5j6HFPKeqEk0WAD13jfrUC7+ULuewFBBCoADPpg=="],
 
-    "bun-react-template": ["bun-react-template@workspace:apps/playground"],
-
     "bun-types": ["bun-types@1.3.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-z3Xwlg7j2l9JY27x5Qn3Wlyos8YAp0kKRlrePAOjgjMGS5IG6E7Jnlx736vH9UVI4wUICwwhC9anYL++XeOgTQ=="],
 
     "buna": ["buna@workspace:packages/buna"],
+
+    "buna-playground": ["buna-playground@workspace:apps/playground"],
 
     "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
 

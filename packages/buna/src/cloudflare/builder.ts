@@ -400,7 +400,6 @@ async function ensureTailwindPlugin(ctx: TransformContext): Promise<BunPlugin | 
 
 async function loadTailwindPluginFromProject(projectRoot: string): Promise<BunPlugin | null> {
   try {
-    // @ts-expect-error
     const mod = await import("bun-plugin-tailwind");
     return (mod.default ?? mod) as BunPlugin;
   } catch {

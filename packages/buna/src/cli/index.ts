@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -16,6 +17,11 @@ import {
 import { defineConfig } from "../config/define-config";
 import type { BunaConfig, ResolvedBunaConfig } from "../config/types";
 import { generateRoutes } from "../dev/generate-routes";
+import {
+  BUILD_RUNTIME_PRESETS,
+  isBuildRuntime,
+  type BuildRuntime,
+} from "./build";
 
 type BunaCommand = "dev" | "build" | "check-types" | "codegen";
 
@@ -34,9 +40,21 @@ interface CommandContext {
 
 const TURBO_TASK_HINT = {
   dev: "turbo run dev --parallel",
-  build: "turbo run build",
+  build: "turbo run build + target bundler",
   "check-types": "turbo run check-types",
-};
+} as const;
+
+const BUILD_TARGET_OPTIONS = (Object.keys(
+  BUILD_RUNTIME_PRESETS
+) as BuildRuntime[]).map(value => {
+  const preset = BUILD_RUNTIME_PRESETS[value];
+  return {
+    value,
+    label: preset.label,
+    hint: preset.hint,
+  };
+});
+
 
 function isBunaCommand(value: string): value is BunaCommand {
   return ["dev", "build", "check-types", "codegen"].includes(value);
@@ -141,7 +159,60 @@ function resolveTurboBin(root: string): string | null {
   return null;
 }
 
-async function runTurboTask(task: "dev" | "build" | "check-types", args: string[]) {
+function extractBuildRuntimeArg(args: string[]): { runtime?: BuildRuntime; rest: string[] } {
+  const rest: string[] = [];
+  let runtime: BuildRuntime | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg) continue;
+
+    if (arg === "--runtime" || arg === "-r") {
+      const value = args[i + 1];
+      if (value && isBuildRuntime(value.toLowerCase())) {
+        runtime = value.toLowerCase() as BuildRuntime;
+      }
+      i++;
+      continue;
+    }
+
+    if (arg.startsWith("--runtime=")) {
+      const [, raw] = arg.split("=", 2);
+      if (raw && isBuildRuntime(raw.toLowerCase())) {
+        runtime = raw.toLowerCase() as BuildRuntime;
+      }
+      continue;
+    }
+
+    rest.push(arg);
+  }
+
+  return { runtime, rest };
+}
+
+async function ensureBuildRuntimeSelection(runtime?: BuildRuntime): Promise<BuildRuntime> {
+  if (runtime) {
+    return runtime;
+  }
+
+  const selection = await select({
+    message: "Qual alvo de build deseja utilizar?",
+    options: BUILD_TARGET_OPTIONS,
+  });
+
+  if (isCancel(selection)) {
+    cancel("Build cancelado.");
+    process.exit(0);
+  }
+
+  return selection as BuildRuntime;
+}
+
+async function runTurboTask(
+  task: "dev" | "build" | "check-types",
+  args: string[],
+  options?: { env?: NodeJS.ProcessEnv }
+) {
   const workspaceRoot = findWorkspaceRoot();
   if (!workspaceRoot) {
     throw new Error('Could not find a "turbo.json" to identify the monorepo.');
@@ -158,11 +229,17 @@ async function runTurboTask(task: "dev" | "build" | "check-types", args: string[
 
   const turboArgs = ["run", task, ...args];
 
+  const env = {
+    ...process.env,
+    ...options?.env,
+  };
+
   await new Promise<void>((resolvePromise, rejectPromise) => {
     const child = spawn(turboBin, turboArgs, {
       cwd: workspaceRoot,
       stdio: "inherit",
       shell: false,
+      env,
     });
 
     child.on("exit", code => {
@@ -242,6 +319,7 @@ Available commands:
 
 Options:
   --config <file>     Uses an alternative config file for codegen
+  --runtime <target>  Selects build target (bun|node|cloudflare) for "buna build"
   -h, --help          Shows this help message
 
 Examples:
@@ -250,6 +328,8 @@ Examples:
   buna codegen --config apps/playground/buna.config.ts
 `);
 }
+
+const BUILD_RUNTIME_MARKER = ".buna-runtime-target";
 
 const commandHandlers: Record<
   BunaCommand,
@@ -262,7 +342,27 @@ const commandHandlers: Record<
     await runTurboTask("dev", turboArgs);
   },
   build: async ({ args }) => {
-    await runTurboTask("build", args);
+    const { runtime, rest } = extractBuildRuntimeArg(args);
+    const selectedRuntime = await ensureBuildRuntimeSelection(runtime);
+    note(`alvo: ${selectedRuntime}`, "buna build");
+
+    const workspaceRoot = findWorkspaceRoot();
+    if (!workspaceRoot) {
+      throw new Error('Could not find a "turbo.json" to identify the monorepo.');
+    }
+
+    const shouldCreateMarker = selectedRuntime !== "bun";
+    if (shouldCreateMarker) {
+      await writeRuntimeMarker(workspaceRoot, selectedRuntime);
+    }
+
+    try {
+      await runTurboTask("build", rest);
+    } finally {
+      if (shouldCreateMarker) {
+        await removeRuntimeMarker(workspaceRoot).catch(() => {});
+      }
+    }
   },
   "check-types": async ({ args }) => {
     await runTurboTask("check-types", args);
@@ -313,3 +413,13 @@ main().catch(error => {
   );
   process.exit(1);
 });
+
+async function writeRuntimeMarker(root: string, runtime: BuildRuntime) {
+  const markerPath = join(root, BUILD_RUNTIME_MARKER);
+  await writeFile(markerPath, runtime, "utf8");
+}
+
+async function removeRuntimeMarker(root: string) {
+  const markerPath = join(root, BUILD_RUNTIME_MARKER);
+  await rm(markerPath, { force: true }).catch(() => {});
+}

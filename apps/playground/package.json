@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/entry.ts",
-    "build": "bun run build.ts",
+    "buna:prepare": "bun run scripts/prepare-buna.ts",
+    "dev": "bun run buna:prepare && bun --hot src/entry.ts",
+    "build": "bun run buna:prepare && bun run .buna/build.ts",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
