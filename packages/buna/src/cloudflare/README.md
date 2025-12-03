@@ -17,7 +17,7 @@ bun run ../../packages/buna/src/cloudflare/index.ts --config buna.config.ts
 Useful options:
 
 * `--dev`: disables minification and cache headers to make debugging easier.
-* `--out <dir>`: changes the output directory (default: `<outDir>/cloudflare-worker`).
+* `--out <dir>`: changes the output directory (default: `<outDir>/cloudflare`).
 * `--assets-base <path>`: changes the public prefix for assets (default: `/_buna/assets`).
 * `--skip-codegen`: skips running `generateRoutes` automatically (if you’ve already executed it).
 * Using Tailwind via `<link href="tailwindcss" />` requires `bun-plugin-tailwind` + `tailwindcss` to be installed in your app (the builder will compile and include the generated CSS automatically).

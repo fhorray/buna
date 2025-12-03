@@ -5,7 +5,7 @@ declare module "*.svg" {
    * A path to the SVG file
    */
   const path: `${string}.svg`;
-  export = path;
+  export default path;
 }
 
 declare module "*.module.css" {

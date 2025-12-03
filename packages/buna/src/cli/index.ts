@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -22,8 +22,9 @@ import {
   isBuildRuntime,
   type BuildRuntime,
 } from "./build";
+import { BUILD_RUNNER_TEMPLATE } from "./templates/build-runner-template";
 
-type BunaCommand = "dev" | "build" | "check-types" | "codegen";
+type BunaCommand = "dev" | "build" | "check-types" | "codegen" | "prepare";
 
 interface ParsedCliArgs {
   command?: BunaCommand;
@@ -57,7 +58,7 @@ const BUILD_TARGET_OPTIONS = (Object.keys(
 
 
 function isBunaCommand(value: string): value is BunaCommand {
-  return ["dev", "build", "check-types", "codegen"].includes(value);
+  return ["dev", "build", "check-types", "codegen", "prepare"].includes(value);
 }
 
 function parseCliArgs(argv: string[]): ParsedCliArgs {
@@ -266,6 +267,27 @@ async function runCodegen(configFile: string) {
   s.stop("Routes updated successfully!");
 }
 
+async function runPrepareWorkspace(configFile: string) {
+  const s = spinner();
+  s.start(`Preparing workspace with ${configFile}...`);
+  const config = await loadConfig(configFile);
+  const projectRoot = process.cwd();
+  const bunaDir = resolve(projectRoot, config.outDir);
+
+  await rm(bunaDir, { recursive: true, force: true }).catch(() => {});
+  s.message("Generating Buna routes...");
+  await generateRoutes(config);
+
+  await mkdir(bunaDir, { recursive: true });
+  await ensureBuildRunnerScript(bunaDir);
+  s.stop(".buna directory refreshed.");
+}
+
+async function ensureBuildRunnerScript(bunaDir: string) {
+  const target = join(bunaDir, "build.ts");
+  await writeFile(target, BUILD_RUNNER_TEMPLATE, "utf8");
+}
+
 async function ensureCommand(command?: BunaCommand): Promise<BunaCommand> {
   if (command) {
     return command;
@@ -294,6 +316,11 @@ async function ensureCommand(command?: BunaCommand): Promise<BunaCommand> {
         label: "Generate routes (buna.config)",
         hint: "Updates .buna/routes.generated.ts",
       },
+      {
+        value: "prepare",
+        label: "Prepare workspace (.buna)",
+        hint: "Cleans and regenerates project-specific artifacts",
+      },
     ],
   });
 
@@ -316,6 +343,7 @@ Available commands:
   build           Runs the full build pipeline
   check-types     Validates types in all workspaces
   codegen         Generates the routes defined in buna.config.ts
+  prepare         Cleans .buna and recreates helper scripts
 
 Options:
   --config <file>     Uses an alternative config file for codegen
@@ -369,6 +397,9 @@ const commandHandlers: Record<
   },
   codegen: async ({ configFile }) => {
     await runCodegen(configFile);
+  },
+  prepare: async ({ configFile }) => {
+    await runPrepareWorkspace(configFile);
   },
 };
 

@@ -123,7 +123,7 @@ function printHelp() {
 
 Opções:
   --config <arquivo>        Caminho para o arquivo buna.config.ts (padrão: buna.config.ts)
-  --out <dir>               Diretório de saída do worker (padrão: <outDir>/cloudflare-worker)
+  --out <dir>               Diretório de saída do worker (padrão: <outDir>/cloudflare)
   --assets-base <path>      Prefixo público para assets estáticos (padrão: /_buna/assets)
   --skip-codegen            Não executa o generateRoutes antes do build
   --dev                     Build em modo desenvolvimento (sem minificação e sem cache)

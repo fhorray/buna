@@ -1,12 +1,19 @@
 import { createRoute, type RouteContext } from 'buna';
 import { useState } from 'react';
+import logoUrl from '@public/logo.svg';
 
 const AboutPage = createRoute((ctx: RouteContext) => {
   const [count, setCount] = useState(0);
 
   return (
     <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
-      <div className="w-full max-w-xl text-center">
+      <div className="w-full flex justify-center flex-col gap-4 max-w-xl text-center">
+        <img
+          src={logoUrl}
+          alt="Buna logo"
+          width={100}
+          className="self-center"
+        />
         {/* Intro */}
         <h1 className="text-4xl font-semibold tracking-tight mb-3">
           Welcome to <span className="text-emerald-400">buna()</span>

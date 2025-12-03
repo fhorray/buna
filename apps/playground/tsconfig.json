@@ -6,6 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
+      "@public/*": ["./public/*"],
+
       "#buna/*": [".buna/*"],
       "buna": [".buna/runtime/index.js"],
       "buna/*": [".buna/runtime/*"]
@@ -15,7 +17,8 @@
     "src",
     ".buna",
     "buna.config.ts",
-    "types"
-, "index.ts"  ],
+    "types",
+    "bun-env.d.ts"
+  ],
   "exclude": ["dist", "node_modules"]
 }

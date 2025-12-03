@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+export const BUILD_RUNNER_TEMPLATE = `#!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { runBunaBuild } from "buna/cli/build";
@@ -45,3 +45,4 @@ await runBunaBuild({
   cwd: process.cwd(),
   argv: forwardedArgs,
 });
+`;

@@ -1,5 +1,5 @@
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
-import { dirname as pathDirname, isAbsolute, join, relative, resolve } from "node:path";
+import { basename as pathBasename, dirname as pathDirname, extname as pathExtname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { BunPlugin } from "bun";
 import type { ResolvedBunaConfig } from "../config/types";
@@ -32,7 +32,7 @@ const DEFAULT_STATIC_CACHE = "public, max-age=31536000, immutable";
 
 export interface CloudflareBuildOptions {
   config: ResolvedBunaConfig;
-  /** Directory where the worker file should be emitted. Defaults to `<config.outDir>/cloudflare-worker`. */
+  /** Directory where the worker file should be emitted. Defaults to `<config.outDir>/cloudflare`. */
   outDir?: string;
   /** URL prefix used for static assets served by the worker. */
   assetsBasePath?: string;
@@ -68,6 +68,8 @@ interface TransformContext {
   tailwindPlugin?: BunPlugin | null;
 }
 
+type BunBuildArtifact = Awaited<ReturnType<typeof Bun.build>>["outputs"][number];
+
 export async function buildCloudflareWorker(options: CloudflareBuildOptions): Promise<CloudflareBuildResult> {
   const {
     config,
@@ -79,7 +81,7 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
     assetCacheControl = DEFAULT_STATIC_CACHE,
   } = options;
 
-  const resolvedOutDir = resolveOutputDirectory(outDir ?? join(config.outDir, "cloudflare-worker"), projectRoot);
+  const resolvedOutDir = resolveOutputDirectory(outDir ?? join(config.outDir, "cloudflare"), projectRoot);
   await resetDir(resolvedOutDir);
   const workerAssetsDir = join(resolvedOutDir, "assets");
   const workerPagesDir = join(resolvedOutDir, "pages");
@@ -243,11 +245,27 @@ async function transformHtmlFile(filePath: string, html: string, ctx: TransformC
     output = output.replace(sheet.original, newTag);
   }
 
+  for (const assetTag of extractStaticAssetTags(html)) {
+    if (!isRelativeAsset(assetTag.value)) {
+      continue;
+    }
+
+    const entryPath = resolve(dir, assetTag.value);
+    const asset = await compileStaticAsset(entryPath, ctx);
+    const attrPattern = new RegExp(
+      `${assetTag.attrName}=(["'])${escapeRegex(assetTag.value)}\\1`,
+      "i",
+    );
+    const replacedTag = assetTag.original.replace(attrPattern, `${assetTag.attrName}="${asset.urlPath}"`);
+    output = output.replace(assetTag.original, replacedTag);
+  }
+
   return output;
 }
 
 type ScriptTag = { original: string; src: string; isModule: boolean };
 type StylesheetTag = { original: string; href: string };
+type StaticAssetTag = { original: string; attrName: string; value: string; tagName: string };
 
 function extractScriptTags(html: string): ScriptTag[] {
   const regex = /<script\b[^>]*src=["']([^"']+)["'][^>]*><\/script>/gi;
@@ -279,6 +297,42 @@ function extractStylesheetLinks(html: string): StylesheetTag[] {
   return tags;
 }
 
+const STATIC_ASSET_ATTRS: Record<string, Set<string>> = {
+  src: new Set(["img", "source", "audio", "video", "track", "iframe", "embed", "object"]),
+  href: new Set(["link"]),
+  poster: new Set(["video"]),
+};
+
+function extractStaticAssetTags(html: string): StaticAssetTag[] {
+  const regex = /<([a-zA-Z0-9:-]+)\b[^>]*?(src|href|poster)=["']([^"']+)["'][^>]*>/gi;
+  const tags: StaticAssetTag[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(html))) {
+    const original = match[0];
+    const tagName = match[1]?.toLowerCase();
+    const attrName = match[2]?.toLowerCase();
+    const value = match[3];
+    if (!original || !tagName || !attrName || !value) continue;
+
+    const allowedTags = STATIC_ASSET_ATTRS[attrName];
+    if (!allowedTags || !allowedTags.has(tagName)) {
+      continue;
+    }
+
+    if (tagName === "link") {
+      const relMatch = original.match(/rel=["']([^"']+)["']/i);
+      if (relMatch && relMatch[1]?.toLowerCase() === "stylesheet") {
+        continue;
+      }
+    }
+
+    tags.push({ original, attrName, value, tagName });
+  }
+
+  return tags;
+}
+
 function isRelativeAsset(value: string): boolean {
   if (!value) return false;
   return value.startsWith("./") || value.startsWith("../");
@@ -301,9 +355,7 @@ async function compileScriptAsset(entryPath: string, ctx: TransformContext): Pro
     throw new Error(formatBuildErrors(entryPath, result.logs));
   }
 
-  const artifact = result.outputs.find(
-    (output) => output.kind === "entry-point" || output.kind === "asset",
-  );
+  const artifact = result.outputs.find((output) => output.kind === "entry-point");
 
   if (!artifact) {
     throw new Error(`Bun.build não retornou artefatos para ${entryPath}`);
@@ -323,6 +375,8 @@ async function compileScriptAsset(entryPath: string, ctx: TransformContext): Pro
 
   ctx.assetCache.set(entryPath, asset);
   ctx.assets.push(asset);
+
+  await emitBundledAssetOutputs(result.outputs, artifact, ctx);
 
   return asset;
 }
@@ -450,14 +504,88 @@ async function loadTailwindPluginFromProject(projectRoot: string): Promise<BunPl
   return null;
 }
 
-async function writeAssetFile(ctx: TransformContext, filename: string, contents: string) {
+async function emitBundledAssetOutputs(
+  outputs: BunBuildArtifact[],
+  skip: BunBuildArtifact,
+  ctx: TransformContext,
+) {
+  for (const artifact of outputs) {
+    if (artifact === skip) {
+      continue;
+    }
+    if (artifact.kind !== "asset") {
+      continue;
+    }
+
+    const filename =
+      artifact.path && artifact.path !== ""
+        ? pathBasename(artifact.path)
+        : `asset-${artifact.hash}`;
+    const buffer = new Uint8Array(await artifact.arrayBuffer());
+    await writeAssetFile(ctx, filename, buffer);
+
+    const asset: WorkerAsset = {
+      entryPath: artifact.path ?? filename,
+      fileName: filename,
+      urlPath: `${ctx.assetsBasePath}/${filename}`,
+      contentType: guessContentType(pathExtname(filename)),
+    };
+
+    ctx.assets.push(asset);
+  }
+}
+
+async function compileStaticAsset(entryPath: string, ctx: TransformContext): Promise<WorkerAsset> {
+  const cached = ctx.assetCache.get(entryPath);
+  if (cached) return cached;
+
+  const file = Bun.file(entryPath);
+  if (!(await file.exists())) {
+    throw new Error(`Arquivo de asset não encontrado: ${entryPath}`);
+  }
+
+  const buffer = new Uint8Array(await file.arrayBuffer());
+  const relativePath = relative(ctx.projectRoot, entryPath).replace(/\\/g, "/");
+  const ext = pathExtname(entryPath);
+  const baseName = slugify(relativePath.replace(ext, ""));
+  const filename = `${baseName}-${hashBuffer(buffer)}${ext || ""}`;
+  const urlPath = `${ctx.assetsBasePath}/${filename}`;
+
+  await writeAssetFile(ctx, filename, buffer);
+
+  const asset: WorkerAsset = {
+    entryPath,
+    fileName: filename,
+    urlPath,
+    contentType: guessContentType(ext),
+  };
+
+  ctx.assetCache.set(entryPath, asset);
+  ctx.assets.push(asset);
+
+  return asset;
+}
+
+async function writeAssetFile(ctx: TransformContext, filename: string, contents: string | Uint8Array | Buffer) {
   const assetPath = join(ctx.assetsDir, filename);
   await ensureDir(pathDirname(assetPath));
-  await writeFile(assetPath, contents, "utf8");
+  if (typeof contents === "string") {
+    await writeFile(assetPath, contents, "utf8");
+  } else {
+    await writeFile(assetPath, contents);
+  }
 }
 
 function hashString(value: string): string {
   const data = new TextEncoder().encode(value);
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    hash = (hash * 31 + data[i]) >>> 0;
+  }
+  return hash.toString(16);
+}
+
+function hashBuffer(data: Uint8Array): string {
   let hash = 0;
   for (let i = 0; i < data.length; i++) {
     hash = (hash * 31 + data[i]) >>> 0;
@@ -482,6 +610,38 @@ function sanitizeAssetPrefix(prefix: string): string {
 
 function resolveOutputDirectory(dir: string, cwd: string): string {
   return isAbsolute(dir) ? dir : resolve(cwd, dir);
+}
+
+function guessContentType(ext: string): string {
+  switch (ext.toLowerCase()) {
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".gif":
+      return "image/gif";
+    case ".svg":
+      return "image/svg+xml";
+    case ".webp":
+      return "image/webp";
+    case ".ico":
+      return "image/x-icon";
+    case ".avif":
+      return "image/avif";
+    case ".mp4":
+      return "video/mp4";
+    case ".webm":
+      return "video/webm";
+    case ".mp3":
+      return "audio/mpeg";
+    case ".ogg":
+      return "audio/ogg";
+    case ".json":
+      return "application/json";
+    default:
+      return "application/octet-stream";
+  }
 }
 
 function compilePatternToRegex(pattern: string): string | null {
