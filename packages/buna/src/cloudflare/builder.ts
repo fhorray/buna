@@ -6,8 +6,8 @@ import type { ResolvedBunaConfig } from "../config/types";
 
 type WorkerAsset = {
   entryPath: string;
+  fileName: string;
   urlPath: string;
-  contents: string;
   contentType: string;
 };
 
@@ -61,6 +61,7 @@ interface TransformContext {
   assetsBasePath: string;
   assetCache: Map<string, WorkerAsset>;
   assets: WorkerAsset[];
+  assetsDir: string;
   plugins: BunPlugin[];
   config: ResolvedBunaConfig;
   tailwindAsset?: WorkerAsset | null;
@@ -79,13 +80,17 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
   } = options;
 
   const resolvedOutDir = resolveOutputDirectory(outDir ?? join(config.outDir, "cloudflare-worker"), projectRoot);
-  await ensureDir(resolvedOutDir);
+  await resetDir(resolvedOutDir);
+  const workerAssetsDir = join(resolvedOutDir, "assets");
+  const workerPagesDir = join(resolvedOutDir, "pages");
+  await ensureDir(workerAssetsDir);
+  await ensureDir(workerPagesDir);
 
-  const pagesDir = join(config.outDir, "pages");
-  const htmlFiles = await collectHtmlFiles(pagesDir);
+  const generatedPagesDir = join(config.outDir, "pages");
+  const htmlFiles = await collectHtmlFiles(generatedPagesDir);
 
   if (htmlFiles.length === 0) {
-    throw new Error(`Nenhuma página .html encontrada em "${pagesDir}". Execute "buna codegen" antes de gerar o worker.`);
+    throw new Error(`Nenhuma página .html encontrada em "${generatedPagesDir}". Execute "buna codegen" antes de gerar o worker.`);
   }
 
   const ctx: TransformContext = {
@@ -94,6 +99,7 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
     assetsBasePath: sanitizeAssetPrefix(assetsBasePath),
     assetCache: new Map(),
     assets: [],
+    assetsDir: workerAssetsDir,
     plugins: [createWorkspaceResolverPlugin(), createExtensionFallbackPlugin()],
     config,
   };
@@ -102,13 +108,14 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
 
   for (const file of htmlFiles) {
     const html = await readFile(file, "utf8");
-    const pattern = extractRoutePattern(html) ?? inferRouteFromFile(file, pagesDir);
+    const pattern = extractRoutePattern(html) ?? inferRouteFromFile(file, generatedPagesDir);
 
     if (!pattern) {
       throw new Error(`Não foi possível determinar o caminho da rota para o arquivo ${file}`);
     }
 
     const transformed = await transformHtmlFile(file, html, ctx);
+    await emitWorkerPage(file, transformed, generatedPagesDir, workerPagesDir);
     routes.push({
       pattern,
       html: transformed,
@@ -118,9 +125,9 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
 
   const workerSource = createWorkerSource({
     routes,
-    assets: ctx.assets,
     htmlCacheControl,
     assetCacheControl,
+    assetsBasePath: ctx.assetsBasePath,
   });
 
   const workerPath = join(resolvedOutDir, "worker.js");
@@ -131,6 +138,18 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
 
 async function ensureDir(path: string) {
   await mkdir(path, { recursive: true });
+}
+
+async function resetDir(path: string) {
+  await rm(path, { recursive: true, force: true }).catch(() => { });
+  await mkdir(path, { recursive: true });
+}
+
+async function emitWorkerPage(sourceFile: string, html: string, sourceDir: string, targetDir: string) {
+  const relativePath = relative(sourceDir, sourceFile);
+  const outputFile = join(targetDir, relativePath);
+  await ensureDir(pathDirname(outputFile));
+  await writeFile(outputFile, html, "utf8");
 }
 
 async function collectHtmlFiles(dir: string): Promise<string[]> {
@@ -293,11 +312,12 @@ async function compileScriptAsset(entryPath: string, ctx: TransformContext): Pro
   const contents = await artifact.text();
   const filename = `${slugify(relative(ctx.projectRoot, entryPath).replace(/\\/g, "/").replace(/\.[tj]sx?$/, ""))}-${artifact.hash}.js`;
   const urlPath = `${ctx.assetsBasePath}/${filename}`;
+  await writeAssetFile(ctx, filename, contents);
 
   const asset: WorkerAsset = {
     entryPath,
+    fileName: filename,
     urlPath,
-    contents,
     contentType: "text/javascript; charset=utf-8",
   };
 
@@ -320,11 +340,12 @@ async function compileCssAsset(entryPath: string, ctx: TransformContext): Promis
   const contents = await readFile(entryPath, "utf8");
   const filename = `${slugify(relative(ctx.projectRoot, entryPath).replace(/\\/g, "/").replace(/\.[cm]?css$/, ""))}-${hashString(contents)}.css`;
   const urlPath = `${ctx.assetsBasePath}/${filename}`;
+  await writeAssetFile(ctx, filename, contents);
 
   const asset: WorkerAsset = {
     entryPath,
+    fileName: filename,
     urlPath,
-    contents,
     contentType: "text/css; charset=utf-8",
   };
 
@@ -372,11 +393,12 @@ async function compileTailwindAsset(ctx: TransformContext): Promise<WorkerAsset 
   const contents = await artifact.text();
   const filename = `tailwind-${artifact.hash}.css`;
   const urlPath = `${ctx.assetsBasePath}/${filename}`;
+  await writeAssetFile(ctx, filename, contents);
 
   const asset: WorkerAsset = {
     entryPath: "tailwindcss",
+    fileName: filename,
     urlPath,
-    contents,
     contentType: "text/css; charset=utf-8",
   };
 
@@ -426,6 +448,12 @@ async function loadTailwindPluginFromProject(projectRoot: string): Promise<BunPl
   }
 
   return null;
+}
+
+async function writeAssetFile(ctx: TransformContext, filename: string, contents: string) {
+  const assetPath = join(ctx.assetsDir, filename);
+  await ensureDir(pathDirname(assetPath));
+  await writeFile(assetPath, contents, "utf8");
 }
 
 function hashString(value: string): string {
@@ -485,9 +513,9 @@ function escapeRegex(value: string): string {
 
 function createWorkerSource(params: {
   routes: HtmlRouteRecord[];
-  assets: WorkerAsset[];
   htmlCacheControl: string;
   assetCacheControl: string;
+  assetsBasePath: string;
 }): string {
   const routeEntries = params.routes
     .map((route) => {
@@ -496,25 +524,19 @@ function createWorkerSource(params: {
     })
     .join(",\n  ");
 
-  const assetEntries = params.assets
-    .map((asset) => `[${JSON.stringify(asset.urlPath)}, { body: ${JSON.stringify(asset.contents)}, contentType: ${JSON.stringify(asset.contentType)} }]`)
-    .join(",\n  ");
-
   return `// GENERATED BY buna cloudflare builder
 const HTML_ROUTES = [
   ${routeEntries}
 ];
-
-const STATIC_ASSETS = new Map([
-  ${assetEntries}
-]);
 
 const HTML_HEADERS = {
   "content-type": "text/html; charset=utf-8",
   "cache-control": ${JSON.stringify(params.htmlCacheControl)},
 };
 
-const ASSET_CACHE = ${JSON.stringify(params.assetCacheControl)};
+const ASSET_CACHE_HEADER = ${JSON.stringify(params.assetCacheControl)};
+const ASSET_PREFIX = ${JSON.stringify(params.assetsBasePath)};
+const ASSET_BINDING_KEY = "ASSETS";
 
 function normalizePath(pathname) {
   if (pathname.length > 1 && pathname.endsWith("/")) {
@@ -535,23 +557,48 @@ function matchHtmlRoute(pathname) {
   return null;
 }
 
-function serveAsset(pathname) {
-  const asset = STATIC_ASSETS.get(pathname);
-  if (!asset) return null;
-  return new Response(asset.body, {
-    headers: {
-      "content-type": asset.contentType,
-      "cache-control": ASSET_CACHE,
-    },
+async function maybeServeBoundAsset(request, env) {
+  const assetBinding = env?.[ASSET_BINDING_KEY];
+  if (!assetBinding) {
+    return null;
+  }
+
+  const url = new URL(request.url);
+  if (!url.pathname.startsWith(ASSET_PREFIX)) {
+    return null;
+  }
+
+  const relativePath = url.pathname.slice(ASSET_PREFIX.length) || "/";
+  const assetPath = relativePath.startsWith("/") ? relativePath : \`/\${relativePath}\`;
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = assetPath;
+  assetUrl.search = "";
+  assetUrl.hash = "";
+
+  const assetRequest = new Request(assetUrl.toString(), request);
+  const response = await assetBinding.fetch(assetRequest);
+  if (!response || response.status === 404) {
+    return null;
+  }
+
+  const headers = new Headers(response.headers);
+  if (ASSET_CACHE_HEADER) {
+    headers.set("cache-control", ASSET_CACHE_HEADER);
+  }
+
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
   });
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const normalized = normalizePath(url.pathname);
 
-    const assetResponse = serveAsset(normalized);
+    const assetResponse = await maybeServeBoundAsset(request, env);
     if (assetResponse) {
       return assetResponse;
     }

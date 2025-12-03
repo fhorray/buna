@@ -36,9 +36,9 @@ export const BUILD_RUNTIME_PRESETS: Record<BuildRuntime, BuildPreset> = {
   },
   cloudflare: {
     target: "browser",
-    outDir: ".buna/cloudflare-worker",
+    outDir: ".buna/cloudflare",
     label: "Cloudflare Worker",
-    hint: ".buna/cloudflare-worker",
+    hint: ".buna/cloudflare",
   },
 };
 
@@ -205,7 +205,7 @@ async function loadBunaConfigFromFile(
 
     return defineConfig(raw as BunaConfig);
   } finally {
-    await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    await rm(tempDir, { recursive: true, force: true }).catch(() => { });
   }
 }
 
@@ -334,8 +334,7 @@ export async function runBunaBuild(
 
     if (!options.silent) {
       console.log(
-        `${BUNA_BUILD_LOG_PREFIX} Found ${entrypoints.length} entrypoint${
-          entrypoints.length > 1 ? "s" : ""
+        `${BUNA_BUILD_LOG_PREFIX} Found ${entrypoints.length} entrypoint${entrypoints.length > 1 ? "s" : ""
         }\n`
       );
     }

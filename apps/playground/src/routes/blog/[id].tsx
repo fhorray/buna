@@ -13,4 +13,8 @@ const PostDetails = createRoute((ctx: RouteContext<Params>) => {
   );
 });
 
+PostDetails.meta = {
+  title: 'Post Details!',
+};
+
 export default PostDetails;
