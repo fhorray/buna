@@ -6,23 +6,20 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "bin": {
-    "buna": "./dist/cli/index.js"
+    "buna": "./src/cli/index.ts"
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./dev": {
-      "import": "./dist/dev/generate-routes.js",
-      "types": "./dist/dev/generate-routes.d.ts"
+      "import": "./src/index.ts",
+      "types": "./src/indexts"
     },
     "./cli": {
-      "import": "./dist/cli/index.js",
-      "types": "./dist/cli/index.d.ts"
+      "import": "./src/cli/index.ts",
+      "types": "./src/cli/index.ts"
     },
     "./package.json": "./package.json"
   },
@@ -44,7 +41,12 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "watch": "tsc -p tsconfig.json --watch"
+    "watch": "tsc -p tsconfig.json --watch",
+    "dev": "bun run watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0"
   },
   "peerDependencies": {
     "react": "^19.2.0",

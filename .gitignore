@@ -34,3 +34,6 @@ apps/playground/.buna/runtime
 
 # Finder (MacOS) folder config
 .DS_Store
+
+
+.turbo

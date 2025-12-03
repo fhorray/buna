@@ -3,8 +3,10 @@ import { createElement } from "react";
 import type { ReactNode } from "react";
 import type { BunaMeta, BunaMetaRobots } from "./types";
 
-export interface RouteContext {
-  params?: Record<string, string>;
+export interface RouteContext<
+  Params extends Record<string, string> = Record<string, string>,
+> {
+  params?: Params;
   searchParams?: URLSearchParams;
   hash?: string;
 }

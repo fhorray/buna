@@ -3,12 +3,10 @@ export type BunaRoute = Record<string, Bun.HTMLBundle>
 export interface BunaConfig {
   routesDir: string;
   outDir: string;
-  routes: BunaRoute
 }
 
 export interface ResolvedBunaConfig {
   routesDir: string;
   outDir: string;
-  routes: BunaRoute
+  routes?: BunaRoute;
 }
-

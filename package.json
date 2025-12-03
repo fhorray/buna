@@ -1,9 +1,10 @@
 {
-  "name": "buna",
+  "name": "buna-monorepo",
   "version": "0.0.0",
-  "module": "entry.ts",
+  "module": "src/entry.ts",
   "type": "module",
   "private": true,
+  "packageManager": "bun@1.2.0",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -11,17 +12,20 @@
   "scripts": {
     "wkadd": "bash scripts/add.sh",
     "wkrm": "bash scripts/remove.sh",
-    "buna:watch": "bun run --cwd packages/buna watch",
-    "dev": "bun run --cwd apps/playground dev"
+    "codegen": "buna codegen",
+    "dev": "buna dev",
+    "build": "buna build",
+    "check-types": "buna check-types"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "blessed": "^0.1.81"
+    "turbo": "^2.6.1"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@types/blessed": "^0.1.26"
+    "@types/blessed": "^0.1.26",
+    "buna": "workspace:*"
   }
 }

@@ -13,7 +13,7 @@ export async function handleRequest(
   // Simple example: delegate it to the router maybe?
   // heart of buna
   const match = await matchRoute({
-    routes: config.routes,
+    routes: config.routes ?? {},
     pathname: url.pathname,
     method: request.method,
   });

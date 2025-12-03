@@ -1,13 +1,12 @@
 {
-  "name": "bun-react-template",
+  "name": "buna-playground",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "buna:codegen": "bun run ../../packages/buna/src/cli/index.ts codegen",
-    "dev": "bun run buna:codegen && bun run --hot entry.ts",
-    "start": "NODE_ENV=production bun entry.ts",
-    "build": "bun run build.ts"
+    "dev": "bun --hot src/entry.ts",
+    "build": "bun run build.ts",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "bun-plugin-tailwind": "^0.1.2",

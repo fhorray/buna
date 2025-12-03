@@ -11,6 +11,5 @@ export function defineConfig(config: BunaConfig): ResolvedBunaConfig {
   return {
     routesDir: resolve(cwd, config.routesDir),
     outDir: resolve(cwd, config.outDir),
-    routes: config.routes
   };
 }
