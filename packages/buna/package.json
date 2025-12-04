@@ -21,6 +21,10 @@
       "import": "./src/cli/index.ts",
       "types": "./src/cli/index.ts"
     },
+    "./client/layout-registry": {
+      "import": "./src/client/layout-registry.ts",
+      "types": "./src/client/layout-registry.ts"
+    },
     "./cli/build": {
       "import": "./src/cli/build.ts",
       "types": "./src/cli/build.ts"

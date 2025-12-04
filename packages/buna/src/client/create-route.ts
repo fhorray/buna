@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import type { ReactNode } from "react";
 import type { BunaMeta, BunaMetaRobots } from "./types";
+import { consumePendingLayouts, type BunaLayoutComponent } from "./layout-registry";
 
 export interface RouteContext<
   Params extends Record<string, string> = Record<string, string>,
@@ -369,10 +370,25 @@ export function createRoute<C extends RouteContext = RouteContext>(
         applyBunaMeta(meta);
       }
 
+      const layouts = consumePendingLayouts<C>();
       const root = createRoot(container);
-      root.render(createElement(ComponentWithMeta, ctx as C));
+      root.render(wrapWithLayouts(createElement(ComponentWithMeta, ctx as C), layouts, ctx));
     });
   }
 
   return ComponentWithMeta;
+}
+
+function wrapWithLayouts<C extends RouteContext>(
+  element: ReactNode,
+  layouts: BunaLayoutComponent<C>[] | undefined,
+  ctx: C,
+): ReactNode {
+  if (!layouts || layouts.length === 0) {
+    return element;
+  }
+
+  return layouts.reduceRight<ReactNode>((child, LayoutComponent) => {
+    return createElement(LayoutComponent, { ctx, children: child });
+  }, element);
 }

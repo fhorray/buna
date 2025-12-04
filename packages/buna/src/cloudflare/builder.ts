@@ -391,6 +391,49 @@ async function compileCssAsset(entryPath: string, ctx: TransformContext): Promis
     throw new Error(`Arquivo CSS não encontrado: ${entryPath}`);
   }
 
+  const tailwindPlugin = await ensureTailwindPlugin(ctx);
+  if (tailwindPlugin) {
+    const result = await Bun.build({
+      entrypoints: [entryPath],
+      target: "browser",
+      format: "esm",
+      splitting: false,
+      minify: ctx.minify,
+      plugins: [...ctx.plugins, tailwindPlugin],
+    });
+
+    if (!result.success) {
+      throw new Error(formatBuildErrors(entryPath, result.logs));
+    }
+
+    const artifact = result.outputs.find(
+      (output) => output.kind === "entry-point" || output.kind === "asset",
+    );
+
+    if (!artifact) {
+      throw new Error(`Bun.build não retornou artefatos para ${entryPath}`);
+    }
+
+    const contents = await artifact.text();
+    const filename = `${slugify(relative(ctx.projectRoot, entryPath).replace(/\\/g, "/").replace(/\.[cm]?css$/, ""))}-${artifact.hash}.css`;
+    const urlPath = `${ctx.assetsBasePath}/${filename}`;
+    await writeAssetFile(ctx, filename, contents);
+
+    const asset: WorkerAsset = {
+      entryPath,
+      fileName: filename,
+      urlPath,
+      contentType: "text/css; charset=utf-8",
+    };
+
+    ctx.assetCache.set(entryPath, asset);
+    ctx.assets.push(asset);
+
+    await emitBundledAssetOutputs(result.outputs, artifact, ctx);
+
+    return asset;
+  }
+
   const contents = await readFile(entryPath, "utf8");
   const filename = `${slugify(relative(ctx.projectRoot, entryPath).replace(/\\/g, "/").replace(/\.[cm]?css$/, ""))}-${hashString(contents)}.css`;
   const urlPath = `${ctx.assetsBasePath}/${filename}`;

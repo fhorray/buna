@@ -5,7 +5,7 @@ const BlogPage = createRoute((ctx: RouteContext) => {
   const [count, setCount] = useState(0);
 
   return (
-    <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
+    <main className="bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
       Blog page
     </main>
   );

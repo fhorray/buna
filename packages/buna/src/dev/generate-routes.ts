@@ -1,6 +1,8 @@
 import type { ResolvedBunaConfig } from "../config/types";
-import { mkdir, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
+
+const LAYOUT_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js"];
 
 async function ensureDir(path: string) {
   await mkdir(path, { recursive: true });
@@ -14,7 +16,11 @@ async function getFilesRecursively(dir: string): Promise<string[]> {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...(await getFilesRecursively(fullPath)));
-    } else if (entry.isFile() && /\.(tsx|jsx|ts|js)$/.test(entry.name)) {
+    } else if (
+      entry.isFile() &&
+      /\.(tsx|jsx|ts|js)$/.test(entry.name) &&
+      !/^layout\.(tsx|ts|jsx|js)$/.test(entry.name)
+    ) {
       files.push(fullPath);
     }
   }
@@ -65,6 +71,12 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
 
   const projectRoot = process.cwd();
   const pagesDir = join(outDir, "pages");
+  const rootLayoutPath = await findLayoutFile(join(projectRoot, "src/layout"));
+  const layoutCache = new Map<string, string | null>();
+
+  // Absolute path to main CSS entry
+  const cssEntryPath = join(projectRoot, "src/index.css");
+  const hasGlobalCssEntry = await fileExists(cssEntryPath);
 
   await ensureDir(pagesDir);
 
@@ -74,10 +86,10 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
   let routesObject = "export const routes = {\n";
 
   for (const [index, file] of files.entries()) {
-    // 1. rota HTTP
+    // 1. HTTP route
     const routePath = filePathToRoute(file, routesDir);
 
-    // 2. nome para HTML
+    // 2. HTML file name
     const relFromRoutes = relative(routesDir, file)
       .replace(/\\/g, "/")
       .replace(/\.(tsx|jsx|ts|js)$/, "");
@@ -85,15 +97,43 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
     const htmlRelPath = `${relFromRoutes}.html`;
     const htmlDiskPath = join(pagesDir, htmlRelPath);
 
-    // 3. script src relativo ao HTML
-    const scriptSrc = relative(dirname(htmlDiskPath), file).replace(/\\/g, "/");
+    const entryRelPath = `${relFromRoutes}.entry.ts`;
+    const entryDiskPath = join(pagesDir, entryRelPath);
+
+    const layoutChain = await resolveLayoutChainForRoute({
+      filePath: file,
+      routesDir,
+      rootLayoutPath,
+      cache: layoutCache,
+    });
+
+    const routeImportPath = relative(dirname(entryDiskPath), file).replace(/\\/g, "/");
+    await writeRouteEntryModule({
+      entryDiskPath,
+      layoutPaths: layoutChain,
+      routeImportPath,
+      routePath,
+    });
+
+    // 3. script src relative to HTML
+    const scriptSrc = toRelativeAssetPath(
+      relative(dirname(htmlDiskPath), entryDiskPath).replace(/\\/g, "/"),
+    );
+
+    // 4. css href relative to HTML (dynamic)
+    const cssHref = hasGlobalCssEntry
+      ? toRelativeAssetPath(
+          relative(dirname(htmlDiskPath), cssEntryPath).replace(/\\/g, "/"),
+        )
+      : null;
+
+    const cssTag = cssHref ? `    <link rel="stylesheet" href="${cssHref}" />\n` : "";
 
     const htmlContent = `<!DOCTYPE html>
 <html>
   <head>
     <title>${routePath}</title>
-    <link rel="stylesheet" href="tailwindcss" />
-  </head>
+${cssTag}  </head>
   <body data-buna-route="${routePath}">
     <div id="root"></div>
     <script type="module" src="${scriptSrc}"></script>
@@ -119,4 +159,110 @@ ${routesObject}
 `;
 
   await writeFile(join(outDir, "routes.generated.ts"), tsContent, "utf8");
+}
+
+async function fileExists(pathname: string): Promise<boolean> {
+  try {
+    const stats = await stat(pathname);
+    return stats.isFile();
+  } catch {
+    return false;
+  }
+}
+
+async function findLayoutFile(basePathWithoutExt: string): Promise<string | null> {
+  for (const ext of LAYOUT_EXTENSIONS) {
+    const candidate = `${basePathWithoutExt}${ext}`;
+    if (await fileExists(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+async function getLayoutForDirectory(
+  dir: string,
+  cache: Map<string, string | null>,
+): Promise<string | null> {
+  if (cache.has(dir)) {
+    return cache.get(dir) ?? null;
+  }
+
+  const layoutPath = await findLayoutFile(join(dir, "layout"));
+  cache.set(dir, layoutPath ?? null);
+  return layoutPath;
+}
+
+async function resolveLayoutChainForRoute(options: {
+  filePath: string;
+  routesDir: string;
+  rootLayoutPath: string | null;
+  cache: Map<string, string | null>;
+}): Promise<string[]> {
+  const chain: string[] = [];
+  if (options.rootLayoutPath) {
+    chain.push(options.rootLayoutPath);
+  }
+
+  const routeDir = dirname(options.filePath);
+  const relativeDir = relative(options.routesDir, routeDir).replace(/\\/g, "/");
+  const segments = relativeDir.split("/").filter(Boolean);
+  const dirsToCheck: string[] = [];
+
+  let currentDir = options.routesDir;
+  dirsToCheck.push(currentDir);
+
+  for (const segment of segments) {
+    currentDir = join(currentDir, segment);
+    dirsToCheck.push(currentDir);
+  }
+
+  for (const dir of dirsToCheck) {
+    const layout = await getLayoutForDirectory(dir, options.cache);
+    if (layout) {
+      chain.push(layout);
+    }
+  }
+
+  return chain;
+}
+
+async function writeRouteEntryModule(params: {
+  entryDiskPath: string;
+  layoutPaths: string[];
+  routeImportPath: string;
+  routePath: string;
+}) {
+  const entryDir = dirname(params.entryDiskPath);
+  const layoutImports = params.layoutPaths.map((layoutPath, index) => {
+    const importPath = relative(entryDir, layoutPath).replace(/\\/g, "/");
+    const identifier = `Layout_${index}`;
+    return { identifier, importPath };
+  });
+
+  let contents = "";
+
+  if (layoutImports.length > 0) {
+    contents += `import { registerPendingLayouts } from "buna";\n`;
+    for (const { identifier, importPath } of layoutImports) {
+      contents += `import ${identifier} from "${importPath}";\n`;
+    }
+    const layoutList = layoutImports.map(item => item.identifier).join(", ");
+    contents += `registerPendingLayouts([${layoutList}]);\n\n`;
+  }
+
+  contents += `import("${params.routeImportPath}")\n`;
+  contents += `  .catch((error) => {\n`;
+  contents += `    console.error("Failed to load route module for ${params.routePath}", error);\n`;
+  contents += `  });\n`;
+
+  await ensureDir(dirname(params.entryDiskPath));
+  await writeFile(params.entryDiskPath, contents, "utf8");
+}
+
+function toRelativeAssetPath(pathname: string): string {
+  if (pathname.startsWith("./") || pathname.startsWith("../")) {
+    return pathname;
+  }
+  return `./${pathname}`;
 }
