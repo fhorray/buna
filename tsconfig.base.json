@@ -8,8 +8,8 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "buna": ["packages/buna/src"],
-      "buna/*": ["packages/buna/src/*"],
+      "bunax": ["packages/buna/src"],
+      "bunax/*": ["packages/buna/src/*"],
       "buna-dev": ["packages/buna-dev/src"],
       "buna-dev/*": ["packages/buna-dev/src/*"],
       "buna-cli": ["packages/buna-cli/src"],

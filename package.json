@@ -18,6 +18,7 @@
     "wkrm": "bash scripts/remove.sh",
     "wklink": "bash scripts/link.sh",
     "wkunlink": "bash scripts/unlink.sh",
+    "wkpublish": "bash scripts/publish.sh",
     "codegen": "buna codegen",
     "dev": "buna dev",
     "build": "buna build",
@@ -32,7 +33,7 @@
   },
   "dependencies": {
     "@types/blessed": "^0.1.26",
-    "buna": "workspace:*",
-    "buna-cli": "workspace:*"
+    "bunax": "^0.0.1-alpha-01.0",
+    "buna-cli": "^0.0.1-alpha-01.0"
   }
 }

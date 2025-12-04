@@ -6,8 +6,8 @@
       "name": "buna",
       "dependencies": {
         "@types/blessed": "^0.1.26",
-        "buna": "workspace:*",
-        "buna-cli": "workspace:*",
+        "buna-cli": "^0.0.1-alpha-01.0",
+        "bunax": "^0.0.1-alpha-01.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -22,28 +22,26 @@
       "version": "0.1.0",
       "dependencies": {
         "bun-plugin-tailwind": "^0.1.2",
-        "buna": "workspace:*",
-        "react": "^19",
-        "react-dom": "^19",
+        "bunax": "^0.0.1-alpha-01.0",
+        "react": "19.2.1",
+        "react-dom": "19.2.1",
         "tailwindcss": "^4.1.11",
       },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "buna-dev": "workspace:*",
+        "buna-dev": "^0.0.1-alpha-01.0",
       },
     },
     "packages/buna": {
-      "name": "buna",
-      "version": "0.0.1",
+      "name": "bunax",
+      "version": "0.0.1-alpha-01.0",
       "devDependencies": {
         "@types/bun": "latest",
         "@types/node": "^24.10.1",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
@@ -53,40 +51,43 @@
     },
     "packages/buna-cli": {
       "name": "buna-cli",
-      "version": "0.0.1",
+      "version": "0.0.1-alpha-01.0",
       "bin": {
         "buna": "./src/index.ts",
       },
       "dependencies": {
         "@clack/prompts": "^0.7.0",
-        "buna": "workspace:*",
-        "buna-dev": "workspace:*",
+        "buna-dev": "^0.0.1-alpha-01.0",
+        "bunax": "^0.0.1-alpha-01.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/node": "^24.10.1",
+        "buna-dev": "^0.0.1-alpha-01.0",
+        "bunax": "^0.0.1-alpha-01.0",
         "typescript": "^5.0.0",
       },
     },
     "packages/buna-dev": {
       "name": "buna-dev",
-      "version": "0.0.1",
+      "version": "0.0.1-alpha-01.0",
       "dependencies": {
         "bun-plugin-tailwind": "^0.1.2",
-        "buna": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/node": "^24.10.1",
+        "bunax": "^0.0.1-alpha-01.0",
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
         "bun": "^1.2.0",
+        "bunax": "^0.0.1-alpha-01.0",
       },
     },
     "packages/create-buna-app": {
       "name": "create-buna-app",
-      "version": "0.1.0",
+      "version": "0.1.1-aalpha-01.0",
       "bin": {
         "create-buna-app": "dist/index.js",
       },
@@ -99,6 +100,10 @@
         "typescript": "^5.0.0",
       },
     },
+  },
+  "catalog": {
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
   },
   "packages": {
     "@clack/core": ["@clack/core@0.3.5", "", { "dependencies": { "picocolors": "^1.0.0", "sisteransi": "^1.0.5" } }, "sha512-5cfhQNH+1VQ2xLQlmzXMqUoiaH0lRBq9/CLW9lTyMbuKLC3+xEK01tHVvyut++mLOn5urSHmkm6I0Lg9MaJSTQ=="],
@@ -143,13 +148,13 @@
 
     "bun-types": ["bun-types@1.3.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-z3Xwlg7j2l9JY27x5Qn3Wlyos8YAp0kKRlrePAOjgjMGS5IG6E7Jnlx736vH9UVI4wUICwwhC9anYL++XeOgTQ=="],
 
-    "buna": ["buna@workspace:packages/buna"],
-
     "buna-cli": ["buna-cli@workspace:packages/buna-cli"],
 
     "buna-dev": ["buna-dev@workspace:packages/buna-dev"],
 
     "buna-playground": ["buna-playground@workspace:apps/playground"],
+
+    "bunax": ["bunax@workspace:packages/buna"],
 
     "create-buna-app": ["create-buna-app@workspace:packages/create-buna-app"],
 
@@ -159,9 +164,9 @@
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
-    "react": ["react@19.2.0", "", {}, "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ=="],
+    "react": ["react@19.2.1", "", {}, "sha512-DGrYcCWK7tvYMnWh79yrPHt+vdx9tY+1gPZa7nJQtO/p8bLTDaHp4dzwEhQB7pZ4Xe3ok4XKuEPrVuc+wlpkmw=="],
 
-    "react-dom": ["react-dom@19.2.0", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.0" } }, "sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ=="],
+    "react-dom": ["react-dom@19.2.1", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.1" } }, "sha512-ibrK8llX2a4eOskq1mXKu/TGZj9qzomO+sNfO98M6d9zIPOEhlBkMkBUBLd1vgS0gQsLDBzA+8jJBVXDnfHmJg=="],
 
     "scheduler": ["scheduler@0.27.0", "", {}, "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q=="],
 

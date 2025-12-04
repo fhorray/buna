@@ -5,8 +5,8 @@ import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { BunaConfig, ResolvedBunaConfig } from "buna/core";
-import { defineConfig } from "buna/core";
+import type { BunaConfig, ResolvedBunaConfig } from "bunax/core";
+import { defineConfig } from "bunax/core";
 import { generateRoutes } from "../codegen/generate-routes";
 import { buildCloudflareWorker } from "../builder/cloudflare-builder";
 

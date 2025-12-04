@@ -1,6 +1,6 @@
 {
   "name": "buna-dev",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha-01.4",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -34,15 +34,16 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "bun-plugin-tailwind": "^0.1.2",
-    "buna": "workspace:*"
+    "bun-plugin-tailwind": "^0.1.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^24.10.1",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "bunax": "^0.0.1-alpha-01.0"
   },
   "peerDependencies": {
-    "bun": "^1.2.0"
+    "bun": "^1.2.0",
+    "bunax": "^0.0.1-alpha-01.0"
   }
 }

@@ -15,7 +15,7 @@ const DEFAULTS = {
   bunVersion: "1.3.3",
   tailwind: "^4.1.11",
   react: "^19",
-  buna: "latest",
+  bunax: "latest",
   bunaDev: "latest",
 } as const;
 
@@ -111,7 +111,7 @@ async function scaffoldProject(opts: { dir: string; name: string; runtime: Runti
   }
 
   // clean possible existing .buna from previous attempts
-  await rm(join(opts.dir, ".buna"), { recursive: true, force: true }).catch(() => {});
+  await rm(join(opts.dir, ".buna"), { recursive: true, force: true }).catch(() => { });
 
   note(`Project created at ${opts.dir}`, "Files written");
 }
@@ -137,7 +137,7 @@ function buildTemplates(opts: { name: string; runtime: RuntimeTarget; dir: strin
       react: DEFAULTS.react,
       "react-dom": DEFAULTS.react,
       tailwindcss: DEFAULTS.tailwind,
-      buna: DEFAULTS.buna,
+      bunax: DEFAULTS.bunax,
     } as Record<string, string>,
     devDependencies: {
       "buna-dev": DEFAULTS.bunaDev,
@@ -165,8 +165,8 @@ function buildTemplates(opts: { name: string; runtime: RuntimeTarget; dir: strin
       "@/*": ["./*"],
       "@public/*": ["./public/*"],
       "#buna/*": [".buna/*"],
-      "buna": [".buna/runtime/index.js"],
-      "buna/*": [".buna/runtime/*"]
+      "bunax": [".buna/runtime/index.js"],
+      "bunax/*": [".buna/runtime/*"]
     }
   },
   "include": ["src", ".buna", "buna.config.ts", "types", "bun-env.d.ts"],
@@ -187,7 +187,7 @@ declare module "*.module.css" {
 }
 `;
 
-  const bunaConfig = `import { defineConfig } from "buna";
+  const bunaConfig = `import { defineConfig } from "bunax";
 
 export default defineConfig({
   routesDir: "src/routes",
@@ -197,7 +197,7 @@ export default defineConfig({
 
   const entryTs = `import { serve } from "bun";
 import { routes } from "#buna/routes.generated";
-import { handleRequest } from "buna/runtime";
+import { handleRequest } from "bunax/runtime";
 import config from "@/buna.config";
 
 const server = serve({
@@ -226,7 +226,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 export default Layout;
 `;
 
-  const routeTsx = `import { createRoute, type RouteContext } from "buna";
+  const routeTsx = `import { createRoute, type RouteContext } from "bunax";
 import { useState } from "react";
 import logoUrl from "@public/logo.svg";
 

@@ -1,4 +1,4 @@
-import { defineConfig } from "buna";
+import { defineConfig } from "bunax";
 
 export default defineConfig({
   routesDir: "src/routes",

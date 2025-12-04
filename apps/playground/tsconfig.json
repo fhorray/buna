@@ -9,8 +9,8 @@
       "@public/*": ["./public/*"],
 
       "#buna/*": [".buna/*"],
-      "buna": [".buna/runtime/index.js"],
-      "buna/*": [".buna/runtime/*"]
+      "bunax": [".buna/runtime/index.js"],
+      "bunax/*": [".buna/runtime/*"]
     }
   },
   "include": [

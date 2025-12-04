@@ -1,4 +1,4 @@
-import type { ResolvedBunaConfig } from "buna/core";
+import type { ResolvedBunaConfig } from "bunax/core";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
 
@@ -243,7 +243,7 @@ async function writeRouteEntryModule(params: {
   let contents = "";
 
   if (layoutImports.length > 0) {
-    contents += `import { registerPendingLayouts } from "buna";\n`;
+    contents += `import { registerPendingLayouts } from "bunax";\n`;
     for (const { identifier, importPath } of layoutImports) {
       contents += `import ${identifier} from "${importPath}";\n`;
     }

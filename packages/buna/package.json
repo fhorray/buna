@@ -1,6 +1,6 @@
 {
-  "name": "buna",
-  "version": "0.0.1",
+  "name": "bunax",
+  "version": "0.0.1-alpha-01.3",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -43,16 +43,14 @@
     "check-types": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^24.10.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "react": "catalog:",
-    "react-dom": "catalog:",
     "typescript": "^5.0.0"
   }
 }

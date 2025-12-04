@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { defineConfig } from "buna";
-import type { BunaConfig, ResolvedBunaConfig } from "buna/core";
+import { defineConfig } from "bunax";
+import type { BunaConfig, ResolvedBunaConfig } from "bunax/core";
 
 export async function loadConfig(configFile: string): Promise<ResolvedBunaConfig> {
   const configPath = resolve(process.cwd(), configFile);
