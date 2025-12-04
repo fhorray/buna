@@ -11,14 +11,14 @@
   },
   "dependencies": {
     "bun-plugin-tailwind": "^0.1.2",
-    "react": "^19",
-    "react-dom": "^19",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "tailwindcss": "^4.1.11",
     "buna": "workspace:*"
   },
   "devDependencies": {
     "buna-dev": "workspace:*",
-    "@types/react": "^19",
+    "@types/react": "catalog:",
     "@types/react-dom": "^19",
     "@types/bun": "latest"
   }

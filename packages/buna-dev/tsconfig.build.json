@@ -3,7 +3,11 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "declarationDir": "dist"
+    "declarationDir": "dist",
+    "paths": {
+      "buna": ["packages/buna/dist"],
+      "buna/*": ["packages/buna/dist/*"]
+    }
   },
   "include": ["src"]
 }

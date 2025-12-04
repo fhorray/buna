@@ -1,0 +1,390 @@
+#!/usr/bin/env node
+import { mkdir, writeFile, rm, stat, readdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
+import { intro, outro, select, text, cancel, isCancel, note } from "@clack/prompts";
+import { cyan, green } from "kolorist";
+
+type RuntimeTarget = "bun" | "cloudflare";
+
+interface CreateOptions {
+  projectName?: string;
+}
+
+const DEFAULTS = {
+  bunVersion: "1.3.3",
+  tailwind: "^4.1.11",
+  react: "^19",
+  buna: "latest",
+  bunaDev: "latest",
+} as const;
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+
+  intro(`${green("welcome")} to ${cyan("buna()")}`);
+
+  const projectName = await ensureProjectName(options.projectName);
+  const targetRuntime = await askRuntimeTarget();
+  const projectDir = resolve(process.cwd(), projectName);
+
+  await ensureEmptyDir(projectDir);
+
+  await scaffoldProject({
+    dir: projectDir,
+    name: basename(projectDir),
+    runtime: targetRuntime,
+  });
+
+  outro(buildOutro(projectName, targetRuntime));
+}
+
+function parseArgs(argv: string[]): CreateOptions {
+  const name = argv.find(arg => !arg.startsWith("-"));
+  return { projectName: name };
+}
+
+async function ensureProjectName(initial?: string): Promise<string> {
+  if (initial) return initial;
+
+  const value = await text({
+    message: "Project name?",
+    placeholder: "my-buna-app",
+    validate: (v: string | undefined) =>
+      (!v || !v.trim() ? "Please provide a project name." : undefined),
+  });
+
+  if (isCancel(value)) {
+    cancel("No project created.");
+    process.exit(0);
+  }
+
+  return String(value);
+}
+
+async function askRuntimeTarget(): Promise<RuntimeTarget> {
+  const value = await select({
+    message: "Target runtime?",
+    options: [
+      { value: "bun", label: "Bun (local server build)" },
+      { value: "cloudflare", label: "Cloudflare Worker" },
+    ],
+  });
+
+  if (isCancel(value)) {
+    cancel("No project created.");
+    process.exit(0);
+  }
+
+  if (value !== "bun" && value !== "cloudflare") {
+    throw new Error("Invalid runtime selection.");
+  }
+
+  return value;
+}
+
+async function ensureEmptyDir(dir: string) {
+  if (!existsSync(dir)) return;
+
+  const stats = await stat(dir);
+  if (!stats.isDirectory()) {
+    throw new Error(`Target path "${dir}" exists and is not a directory.`);
+  }
+
+  const contents = await stat(join(dir, ".")).catch(() => null);
+  if (contents && (await isNonEmpty(dir))) {
+    throw new Error(`Target directory "${dir}" is not empty. Please choose another name or remove its contents.`);
+  }
+}
+
+async function isNonEmpty(dir: string): Promise<boolean> {
+  const files = await readdir(dir);
+  return files.length > 0;
+}
+
+async function scaffoldProject(opts: { dir: string; name: string; runtime: RuntimeTarget }) {
+  const files = buildTemplates(opts);
+  for (const [relPath, content] of Object.entries(files)) {
+    const target = join(opts.dir, relPath);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, content, "utf8");
+  }
+
+  // clean possible existing .buna from previous attempts
+  await rm(join(opts.dir, ".buna"), { recursive: true, force: true }).catch(() => {});
+
+  note(`Project created at ${opts.dir}`, "Files written");
+}
+
+function buildTemplates(opts: { name: string; runtime: RuntimeTarget; dir: string }) {
+  const isCloudflare = opts.runtime === "cloudflare";
+
+  const pkg = {
+    name: opts.name,
+    version: "0.1.0",
+    private: true,
+    type: "module",
+    scripts: {
+      "buna:prepare": "buna prepare --config buna.config.ts",
+      dev: "bun run buna:prepare && bun --hot src/entry.ts",
+      build:
+        "bun run buna:prepare && bun run .buna/build.ts" +
+        (isCloudflare ? " --runtime cloudflare" : ""),
+      "check-types": "tsc --noEmit",
+    },
+    dependencies: {
+      "bun-plugin-tailwind": "^0.1.2",
+      react: DEFAULTS.react,
+      "react-dom": DEFAULTS.react,
+      tailwindcss: DEFAULTS.tailwind,
+      buna: DEFAULTS.buna,
+    } as Record<string, string>,
+    devDependencies: {
+      "buna-dev": DEFAULTS.bunaDev,
+      "@types/react": "^19",
+      "@types/react-dom": "^19",
+      "@types/bun": "latest",
+    } as Record<string, string>,
+  };
+
+  if (isCloudflare) {
+    pkg.devDependencies.wrangler = "^3.99.0";
+  }
+
+  const tsconfig = `{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "strict": true,
+    "lib": ["ESNext", "DOM"],
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@public/*": ["./public/*"],
+      "#buna/*": [".buna/*"],
+      "buna": [".buna/runtime/index.js"],
+      "buna/*": [".buna/runtime/*"]
+    }
+  },
+  "include": ["src", ".buna", "buna.config.ts", "types", "bun-env.d.ts"],
+  "exclude": ["dist", "node_modules"]
+}
+`;
+
+  const bunEnvDts = `// Generated by create-buna-app
+
+declare module "*.svg" {
+  const path: \`\${string}.svg\`;
+  export default path;
+}
+
+declare module "*.module.css" {
+  const classes: { readonly [key: string]: string };
+  export = classes;
+}
+`;
+
+  const bunaConfig = `import { defineConfig } from "buna";
+
+export default defineConfig({
+  routesDir: "src/routes",
+  outDir: ".buna",
+});
+`;
+
+  const entryTs = `import { serve } from "bun";
+import { routes } from "#buna/routes.generated";
+import { handleRequest } from "buna/runtime";
+import config from "@/buna.config";
+
+const server = serve({
+  routes,
+  development: process.env.NODE_ENV !== "production" && {
+    hmr: true,
+    console: true,
+  },
+  fetch(req) {
+    const env: any = {};
+    const ctx = { waitUntil: (_p: Promise<any>) => {} };
+    return handleRequest(req, env, ctx, config);
+  },
+});
+
+console.log(\`🚀 Server running at \${server.url}\`);
+`;
+
+  const layoutTsx = `import "./index.css";
+import React from "react";
+
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
+export default Layout;
+`;
+
+  const routeTsx = `import { createRoute, type RouteContext } from "buna";
+import { useState } from "react";
+import logoUrl from "@public/logo.svg";
+
+const Home = createRoute((ctx: RouteContext) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <main className="min-h-screen bg-[#0d0d0d] text-slate-100 flex items-center justify-center px-6">
+      <div className="w-full flex justify-center flex-col gap-4 max-w-xl text-center">
+        <img src={logoUrl} alt="Buna logo" width={100} className="self-center" />
+
+        <h1 className="text-4xl font-semibold tracking-tight mb-3">
+          Welcome to <span className="text-emerald-400">buna()</span>
+        </h1>
+        <p className="text-slate-400">
+          Edit <code className="px-1.5 py-0.5 bg-slate-800 rounded text-emerald-300">src/routes/index.tsx</code> to begin.
+        </p>
+
+        <div className="mt-10 border border-slate-700 bg-slate-800/50 rounded-xl p-6 shadow-lg">
+          <p className="text-xs uppercase tracking-wider text-slate-400 mb-4">Interactive example</p>
+          <div className="flex flex-col gap-4 items-center justify-between">
+            <span className="text-3xl font-medium tabular-nums">{count}</span>
+            <button
+              onClick={() => setCount((prev: number) => prev + 1)}
+              className="px-4 py-2 text-sm rounded-lg border border-emerald-400/70 bg-emerald-500/80 text-slate-950 hover:bg-emerald-400 transition cursor-pointer"
+            >
+              Increment
+            </button>
+          </div>
+          <button
+            onClick={() => setCount(0)}
+            className="block mx-auto mt-4 text-sm text-slate-400 hover:text-slate-200 transition cursor-pointer"
+          >
+            Reset
+          </button>
+        </div>
+
+        <p className="mt-10 text-xs text-slate-500">Built using buna() + Tailwind</p>
+      </div>
+    </main>
+  );
+});
+
+Home.meta = {
+  title: "Welcome to buna()",
+  description: "Starter page for your Buna app.",
+  robots: { index: true, follow: true },
+};
+
+export default Home;
+`;
+
+  const indexCss = `@import "tailwindcss";
+`;
+
+  const bunfig = `[serve.static]
+plugins = ["bun-plugin-tailwind"]
+env = "BUN_PUBLIC_*"
+
+[entrypoints]
+server = "src/entry.ts"
+`;
+
+  const gitignore = `node_modules
+dist
+out
+*.tgz
+coverage
+*.lcov
+logs
+_.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+.env
+.env.*.local
+.eslintcache
+.cache
+*.tsbuildinfo
+.idea
+.DS_Store
+.buna
+.wrangler
+`;
+
+  const readme = `# ${opts.name}
+
+A minimal ${opts.runtime === "cloudflare" ? "Cloudflare Worker" : "Bun"} app bootstrapped with buna().
+
+## Quickstart
+
+\`\`\`bash
+cd ${opts.name}
+bun install
+bun run dev
+\`\`\`
+
+Then open http://localhost:3000 and edit \`src/routes/index.tsx\`.
+
+## Build
+
+- \`bun run build\` ${isCloudflare ? "(builds the Cloudflare worker at .buna/cloudflare)" : "(builds your Bun server)"}.
+- \`bun run buna:prepare\` regenerates .buna helpers (routes + build runner).
+- \`bun run check-types\` runs TypeScript without emitting files.
+`;
+
+  const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none"><rect width="256" height="256" rx="56" fill="#0F172A"/><path d="M128 40c48.6 0 88 39.4 88 88s-39.4 88-88 88-88-39.4-88-88 39.4-88 88-88Z" stroke="#34D399" stroke-width="20"/><path d="M96 120c0-17.673 14.327-32 32-32s32 14.327 32 32-14.327 32-32 32h-8v24" stroke="#A5F3FC" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  const wrangler = isCloudflare
+    ? `{
+  "name": "${opts.name}",
+  "main": ".buna/cloudflare/worker.js",
+  "compatibility_date": "2024-05-01",
+  "observability": { "enabled": true },
+  "assets": { "binding": "ASSETS", "directory": ".buna/cloudflare/assets", "run_worker_first": false },
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"]
+}
+`
+    : null;
+
+  const files: Record<string, string> = {
+    "package.json": JSON.stringify(pkg, null, 2) + "\n",
+    "tsconfig.json": tsconfig,
+    "buna.config.ts": bunaConfig,
+    "bunfig.toml": bunfig,
+    ".gitignore": gitignore,
+    "bun-env.d.ts": bunEnvDts,
+    "README.md": readme,
+    "public/logo.svg": logoSvg,
+    "src/entry.ts": entryTs,
+    "src/index.css": indexCss,
+    "src/layout.tsx": layoutTsx,
+    "src/routes/index.tsx": routeTsx,
+  };
+
+  if (wrangler) {
+    files["wrangler.json"] = wrangler;
+  }
+
+  return files;
+}
+
+function buildOutro(projectName: string, runtime: RuntimeTarget): string {
+  const lines = [
+    `Project ready at ./${projectName}`,
+    "",
+    "Next steps:",
+    `  cd ${projectName}`,
+    "  bun install",
+    "  bun run dev",
+    "",
+    runtime === "cloudflare"
+      ? "- Build for Cloudflare: bun run build"
+      : "- Build for Bun: bun run build",
+  ];
+
+  return lines.join("\n");
+}
+
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
