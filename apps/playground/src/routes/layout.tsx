@@ -9,7 +9,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           {/* Branding */}
           <a href="/">
             <span className="inline-flex items-center justify-center p-2 bg-emerald-500/10 text-sm font-semibold">
-              buna<span className="text-emerald-400">()</span>
+              opaca<span className="text-emerald-400">()</span>
             </span>
           </a>
 
@@ -32,7 +32,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <footer className="border-t border-slate-800 bg-[#0d0d0d]">
         <div className="mx-auto max-w-6xl px-5 py-6 text-xs text-slate-500">
           <p className="tracking-wide">
-            Built with buna() for Cloudflare Workers
+            Built with opaca() for Cloudflare Workers
           </p>
           <p className="mt-1 opacity-60">
             RouterView acts as the root layout wrapper. Every route is rendered

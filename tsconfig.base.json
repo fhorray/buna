@@ -8,14 +8,14 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "bunax": ["packages/buna/src"],
-      "bunax/*": ["packages/buna/src/*"],
-      "@buna/dev": ["packages/buna-dev/src"],
-      "buna-dev/*": ["packages/buna-dev/src/*"],
-      "@buna/cli": ["packages/buna-cli/src"],
-      "buna-cli/*": ["packages/buna-cli/src/*"],
-      "#buna/*": ["apps/playground/.buna/*"],
-      "@/buna.config": ["apps/playground/buna.config.ts"],
+      "opaca": ["packages/opaca/src"],
+      "opaca/*": ["packages/opaca/src/*"],
+      "@opaca/dev": ["packages/opaca-dev/src"],
+      "opaca-dev/*": ["packages/opaca-dev/src/*"],
+      "@opaca/cli": ["packages/opaca-cli/src"],
+      "opaca-cli/*": ["packages/opaca-cli/src/*"],
+      "#opaca/*": ["apps/playground/.opaca/*"],
+      "@/opaca.config": ["apps/playground/opaca.config.ts"],
       "@/*": ["apps/playground/*"]
     }
   }

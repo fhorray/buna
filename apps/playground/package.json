@@ -1,28 +1,28 @@
 {
-  "name": "buna-playground",
+  "name": "opaca-playground",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "buna:prepare": "buna prepare --config buna.config.ts",
-    "dev": "bun run buna:prepare && bun --hot src/entry.ts",
-    "build": "bun run buna:prepare && bun run .buna/build.ts",
+    "opaca:prepare": "opaca prepare --config opaca.config.ts",
+    "dev": "bun run opaca:prepare && bun --hot src/entry.ts",
+    "build": "bun run opaca:prepare && bun run .opaca/build.ts",
     "deploy:cf": "NODE_ENV=production bun run build --runtime cloudflare && wrangler deploy",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "bun-plugin-tailwind": "^0.1.2",
-    "bunax": "^0.0.1-alpha-01",
+    "opaca": "workspace:*",
     "react": "19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
-    "@buna/dev": "^0.0.1-alpha-01",
+    "@opaca/dev": "workspace:*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/bun": "latest",
     "@cloudflare/workers-types": "^4.20251202.0",
-    "@buna/devtools": "workspace:*"
+    "@opaca/devtools": "workspace:*"
   }
 }

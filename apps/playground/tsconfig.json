@@ -9,19 +9,19 @@
       "@/*": ["./*"],
       "@public/*": ["./public/*"],
 
-      "#buna/*": [".buna/*"],
+      "#opaca/*": [".opaca/*"],
 
-      "bunax": ["../../packages/buna/src/index.ts"],
-      "bunax/*": ["../../packages/buna/src/*"],
+      "opaca": ["../../packages/opaca/src/index.ts"],
+      "opaca/*": ["../../packages/opaca/src/*"],
 
-      "bunax/runtime": [".buna/runtime/index.js"],
-      "bunax/runtime/*": [".buna/runtime/*"]
+      "opaca/runtime": [".opaca/runtime/index.js"],
+      "opaca/runtime/*": [".opaca/runtime/*"]
     }
   },
   "include": [
     "src",
-    ".buna",
-    "buna.config.ts",
+    ".opaca",
+    "opaca.config.ts",
     "types",
     "bun-env.d.ts"
   ],

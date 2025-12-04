@@ -1,4 +1,4 @@
-import { createRoute, type RouteContext } from 'bunax';
+import { createRoute, type RouteContext } from 'opaca';
 
 type Params = {
   id: string;

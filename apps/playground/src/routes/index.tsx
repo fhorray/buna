@@ -1,4 +1,4 @@
-import { createRoute, type RouteContext } from 'bunax';
+import { createRoute, type RouteContext } from 'opaca';
 import { useState } from 'react';
 import logoUrl from '@public/logo.svg';
 
@@ -10,13 +10,13 @@ const AboutPage = createRoute((ctx: RouteContext) => {
       <div className="w-full flex justify-center flex-col gap-4 max-w-xl text-center">
         <img
           src={logoUrl}
-          alt="Buna logo"
+          alt="Opaca logo"
           width={100}
           className="self-center"
         />
         {/* Intro */}
         <h1 className="text-4xl font-semibold tracking-tight mb-3">
-          Welcome to <span className="text-emerald-400">buna()</span>
+          Welcome to <span className="text-emerald-400">opaca()</span>
         </h1>
         <p className="text-slate-400">
           Start editing{' '}
@@ -53,7 +53,7 @@ const AboutPage = createRoute((ctx: RouteContext) => {
 
         {/* Footer */}
         <p className="mt-10 text-xs text-slate-500">
-          Built using buna() + Tailwind
+          Built using opaca() + Tailwind
         </p>
       </div>
     </main>
@@ -61,9 +61,9 @@ const AboutPage = createRoute((ctx: RouteContext) => {
 });
 
 AboutPage.meta = {
-  title: 'About - Buna Playground',
-  description: 'Example about page using Buna createRoute.',
-  keywords: ['buna', 'playground', 'about'],
+  title: 'About - Opaca Playground',
+  description: 'Example about page using Opaca createRoute.',
+  keywords: ['opaca', 'playground', 'about'],
   htmlLang: 'en',
   robots: {
     index: true,
@@ -71,16 +71,16 @@ AboutPage.meta = {
   },
   canonicalUrl: 'https://example.com/about',
   openGraph: {
-    title: 'About Buna Playground',
-    description: 'Example about page using Buna createRoute.',
+    title: 'About Opaca Playground',
+    description: 'Example about page using Opaca createRoute.',
     url: 'https://example.com/about',
-    siteName: 'Buna Playground',
+    siteName: 'Opaca Playground',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Buna Playground',
-    description: 'Example about page using Buna createRoute.',
+    title: 'About Opaca Playground',
+    description: 'Example about page using Opaca createRoute.',
   },
 };
 

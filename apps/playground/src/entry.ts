@@ -1,8 +1,8 @@
 import { serve } from "bun";
-import { routes } from "#buna/routes.generated";
-import { handleRequest } from "bunax/runtime";
-import { withDevtools } from "@buna/devtools";
-import config from "@/buna.config";
+import { routes } from "#opaca/routes.generated";
+import { handleRequest } from "opaca/runtime";
+import { withDevtools } from "@opaca/devtools";
+import config from "@/opaca.config";
 
 const devHandleRequest = withDevtools(handleRequest);
 

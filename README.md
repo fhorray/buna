@@ -1,4 +1,4 @@
-# buna
+# opaca
 
 To install dependencies:
 

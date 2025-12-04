@@ -2,7 +2,7 @@
 # Workspace cleaner script
 #
 # This script scans the current project for common build / cache folders
-# and deletes them in bulk (e.g. node_modules, dist, .turbo, .buna).
+# and deletes them in bulk (e.g. node_modules, dist, .turbo, .opaca).
 #
 # Usage:
 #   bun run wkclean [options] <target...>
@@ -11,8 +11,8 @@
 #   node_modules   Remove all "node_modules" folders
 #   dist           Remove all "dist" folders
 #   .turbo         Remove all ".turbo" folders
-#   .buna          Remove all ".buna" folders
-#   all            Shortcut for: node_modules, dist, .turbo, .buna
+#   .opaca          Remove all ".opaca" folders
+#   all            Shortcut for: node_modules, dist, .turbo, .opaca
 #
 # Options:
 #   -y, --yes      Do not ask for confirmation (non-interactive mode)
@@ -42,7 +42,7 @@ GRAY="\033[90m"
 
 SCRIPT_NAME=$(basename "$0")
 
-KNOWN_TARGETS=("node_modules" "dist" ".turbo" ".buna" ".wrangler")
+KNOWN_TARGETS=("node_modules" "dist" ".turbo" ".opaca" ".wrangler")
 
 YES=0
 DRY_RUN=0
@@ -55,7 +55,7 @@ print_usage() {
   echo -e "    ${YELLOW}node_modules${RESET}  - Remove all 'node_modules' directories"
   echo -e "    ${YELLOW}dist${RESET}          - Remove all 'dist' directories"
   echo -e "    ${YELLOW}.turbo${RESET}        - Remove all '.turbo' directories"
-  echo -e "    ${YELLOW}.buna${RESET}         - Remove all '.buna' directories"
+  echo -e "    ${YELLOW}.opaca${RESET}         - Remove all '.opaca' directories"
   echo -e "    ${YELLOW}all${RESET}           - All of the above"
   echo ""
   echo -e "  ${BOLD}Options:${RESET}"
@@ -110,8 +110,8 @@ find_paths_for_target() {
     .turbo)
       find . -type d -name ".turbo" -prune 2>/dev/null
       ;;
-    .buna)
-      find . -type d -name ".buna" -prune 2>/dev/null
+    .opaca)
+      find . -type d -name ".opaca" -prune 2>/dev/null
       ;;
     *)
       return 1

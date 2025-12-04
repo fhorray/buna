@@ -1,4 +1,4 @@
-import { createGET, createPOST } from "bunax/server";
+import { createGET, createPOST } from "opaca/server";
 
 const users: any[] = [];
 
