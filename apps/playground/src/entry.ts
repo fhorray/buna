@@ -1,6 +1,6 @@
 import { serve } from "bun";
 import { routes } from "#buna/routes.generated";
-import { handleRequest } from "buna";
+import { handleRequest } from "buna/runtime";
 import config from "@/buna.config"
 
 const server = serve({

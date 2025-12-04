@@ -7,6 +7,7 @@
       "dependencies": {
         "@types/blessed": "^0.1.26",
         "buna": "workspace:*",
+        "buna-cli": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -30,23 +31,17 @@
         "@types/bun": "latest",
         "@types/react": "^19",
         "@types/react-dom": "^19",
+        "buna-dev": "workspace:*",
       },
     },
     "packages/buna": {
       "name": "buna",
       "version": "0.0.1",
-      "bin": {
-        "buna": "./src/cli/index.ts",
-      },
-      "dependencies": {
-        "@clack/prompts": "^0.7.0",
-      },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/node": "^24.10.1",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "bun-plugin-tailwind": "^0.1.2",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "typescript": "^5.0.0",
@@ -54,6 +49,39 @@
       "peerDependencies": {
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+      },
+    },
+    "packages/buna-cli": {
+      "name": "buna-cli",
+      "version": "0.0.1",
+      "bin": {
+        "buna": "./src/index.ts",
+      },
+      "dependencies": {
+        "@clack/prompts": "^0.7.0",
+        "buna": "workspace:*",
+        "buna-dev": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^24.10.1",
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/buna-dev": {
+      "name": "buna-dev",
+      "version": "0.0.1",
+      "dependencies": {
+        "bun-plugin-tailwind": "^0.1.2",
+        "buna": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^24.10.1",
+        "typescript": "^5.0.0",
+      },
+      "peerDependencies": {
+        "bun": "^1.2.0",
       },
     },
   },
@@ -101,6 +129,10 @@
     "bun-types": ["bun-types@1.3.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-z3Xwlg7j2l9JY27x5Qn3Wlyos8YAp0kKRlrePAOjgjMGS5IG6E7Jnlx736vH9UVI4wUICwwhC9anYL++XeOgTQ=="],
 
     "buna": ["buna@workspace:packages/buna"],
+
+    "buna-cli": ["buna-cli@workspace:packages/buna-cli"],
+
+    "buna-dev": ["buna-dev@workspace:packages/buna-dev"],
 
     "buna-playground": ["buna-playground@workspace:apps/playground"],
 

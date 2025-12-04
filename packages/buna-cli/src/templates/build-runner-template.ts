@@ -1,7 +1,7 @@
 export const BUILD_RUNNER_TEMPLATE = `#!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { runBunaBuild } from "buna/cli/build";
+import { runBunaBuild } from "buna-dev";
 
 function readRuntimeMarker(): string | undefined {
   let current = process.cwd();

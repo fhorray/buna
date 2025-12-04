@@ -3,14 +3,14 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { BunaConfig, ResolvedBunaConfig } from "../config/types";
-import { generateRoutes } from "../dev/generate-routes";
+import type { BunaConfig, ResolvedBunaConfig } from "buna/core";
+import { generateRoutes } from "../codegen/generate-routes";
 import {
   buildCloudflareWorker,
   createExtensionFallbackPlugin,
   createHtmlStubPlugin,
   createWorkspaceResolverPlugin,
-} from "./builder";
+} from "./cloudflare-builder";
 
 interface CliOptions {
   configFile: string;
@@ -119,7 +119,7 @@ async function loadConfig(configFile: string): Promise<ResolvedBunaConfig> {
 }
 
 function printHelp() {
-  console.log(`Uso: bun run packages/buna/cloudflare/index.ts [opções]
+  console.log(`Uso: bun run packages/buna-dev/src/builder/cloudflare-cli.ts [opções]
 
 Opções:
   --config <arquivo>        Caminho para o arquivo buna.config.ts (padrão: buna.config.ts)

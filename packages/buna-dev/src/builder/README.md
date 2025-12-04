@@ -5,13 +5,13 @@ Use the builder in this folder to turn a Buna project into a Worker ready to dep
 ## Prerequisites
 
 - Run the commands from the app directory (e.g. `apps/playground`) so that `buna.config.ts` is resolved correctly.
-- Run `bun run ../../packages/buna/src/cli/index.ts codegen` (or the `buna:codegen` script) before starting the build to make sure `.buna/` is up to date.
+- Run `buna codegen` (or the `buna:codegen` script) before starting the build to make sure `.buna/` is up to date.
 
 ## How to use
 
 ```bash
 # inside the app
-bun run ../../packages/buna/src/cloudflare/index.ts --config buna.config.ts
+bun run ../../packages/buna-dev/src/builder/cloudflare-cli.ts --config buna.config.ts
 ```
 
 Useful options:

@@ -2,7 +2,7 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises"
 import { basename as pathBasename, dirname as pathDirname, extname as pathExtname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { BunPlugin } from "bun";
-import type { ResolvedBunaConfig } from "../config/types";
+import type { ResolvedBunaConfig } from "buna/core";
 
 type WorkerAsset = {
   entryPath: string;
@@ -53,7 +53,7 @@ export interface CloudflareBuildResult {
 }
 
 const thisDir = pathDirname(fileURLToPath(import.meta.url));
-const BUNA_SRC_DIR = resolve(thisDir, "..");
+const BUNA_SRC_DIR = resolve(thisDir, "../../../buna/src");
 
 interface TransformContext {
   projectRoot: string;

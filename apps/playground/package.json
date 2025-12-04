@@ -17,6 +17,7 @@
     "buna": "workspace:*"
   },
   "devDependencies": {
+    "buna-dev": "workspace:*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/bun": "latest"

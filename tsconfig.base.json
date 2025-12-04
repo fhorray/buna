@@ -10,6 +10,10 @@
     "paths": {
       "buna": ["packages/buna/src"],
       "buna/*": ["packages/buna/src/*"],
+      "buna-dev": ["packages/buna-dev/src"],
+      "buna-dev/*": ["packages/buna-dev/src/*"],
+      "buna-cli": ["packages/buna-cli/src"],
+      "buna-cli/*": ["packages/buna-cli/src/*"],
       "#buna/*": ["apps/playground/.buna/*"],
       "@/buna.config": ["apps/playground/buna.config.ts"],
       "@/*": ["apps/playground/*"]

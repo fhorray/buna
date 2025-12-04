@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@types/blessed": "^0.1.26",
-    "buna": "workspace:*"
+    "buna": "workspace:*",
+    "buna-cli": "workspace:*"
   }
 }

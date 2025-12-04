@@ -5,10 +5,10 @@ import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { BunaConfig, ResolvedBunaConfig } from "../config/types";
-import { defineConfig } from "../config/define-config";
-import { generateRoutes } from "../dev/generate-routes";
-import { buildCloudflareWorker } from "../cloudflare/builder";
+import type { BunaConfig, ResolvedBunaConfig } from "buna/core";
+import { defineConfig } from "buna/core";
+import { generateRoutes } from "../codegen/generate-routes";
+import { buildCloudflareWorker } from "../builder/cloudflare-builder";
 
 type BunBuildTarget = Exclude<Bun.BuildConfig["target"], undefined>;
 

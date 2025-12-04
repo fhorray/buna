@@ -1,4 +1,4 @@
-import type { ResolvedBunaConfig } from "../config/types";
+import type { ResolvedBunaConfig } from "buna/core";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
 

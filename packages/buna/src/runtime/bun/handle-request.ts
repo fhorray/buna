@@ -1,6 +1,5 @@
-import type { BunaRoute, ResolvedBunaConfig } from "../config/types";
-import type { BunaEnv, BunaExecutionContext } from "./types";
-
+import type { BunaRoute, ResolvedBunaConfig } from "../../core/config/types";
+import type { BunaEnv, BunaExecutionContext } from "../types";
 
 export async function handleRequest(
   request: Request,
@@ -46,6 +45,6 @@ async function matchRoute(opts: {
   method: string;
 }): Promise<RouteMatch | null> {
   // here we can use the buna router to find the route + method
-  // for now its just a stub and retunr null
+  // for now its just a stub and return null
   return null;
 }

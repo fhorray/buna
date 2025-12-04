@@ -9,43 +9,32 @@
     "dist",
     "src"
   ],
-  "bin": {
-    "buna": "./src/cli/index.ts"
-  },
   "exports": {
     ".": {
       "import": "./src/index.ts",
-      "types": "./src/indexts"
+      "types": "./src/index.ts"
     },
-    "./cli": {
-      "import": "./src/cli/index.ts",
-      "types": "./src/cli/index.ts"
+    "./core": {
+      "import": "./src/core/index.ts",
+      "types": "./src/core/index.ts"
     },
-    "./client/layout-registry": {
-      "import": "./src/client/layout-registry.ts",
-      "types": "./src/client/layout-registry.ts"
+    "./router": {
+      "import": "./src/router/index.ts",
+      "types": "./src/router/index.ts"
     },
-    "./cli/build": {
-      "import": "./src/cli/build.ts",
-      "types": "./src/cli/build.ts"
+    "./query": {
+      "import": "./src/query/index.ts",
+      "types": "./src/query/index.ts"
+    },
+    "./react": {
+      "import": "./src/react/index.ts",
+      "types": "./src/react/index.ts"
+    },
+    "./runtime": {
+      "import": "./src/runtime/index.ts",
+      "types": "./src/runtime/index.ts"
     },
     "./package.json": "./package.json"
-  },
-  "typesVersions": {
-    "*": {
-      "dev": [
-        "dist/dev/generate-routes.d.ts"
-      ],
-      "dev/*": [
-        "dist/dev/*"
-      ],
-      "cli": [
-        "dist/cli/index.d.ts"
-      ],
-      "*": [
-        "dist/*"
-      ]
-    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -53,21 +42,17 @@
     "dev": "bun run watch",
     "check-types": "tsc --noEmit"
   },
-  "dependencies": {
-    "@clack/prompts": "^0.7.0"
-  },
   "peerDependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "bun-plugin-tailwind": "^0.1.2",
-    "typescript": "^5.0.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
     "@types/bun": "latest",
     "@types/node": "^24.10.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "typescript": "^5.0.0"
   }
 }
