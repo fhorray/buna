@@ -1,7 +1,7 @@
 import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cancel, isCancel, note, select } from "@clack/prompts";
-import { BUILD_RUNTIME_PRESETS, isBuildRuntime, type BuildRuntime } from "buna-dev";
+import { BUILD_RUNTIME_PRESETS, isBuildRuntime, type BuildRuntime } from "@buna/dev";
 import type { CommandContext } from "../types";
 import { runTurboTask } from "../utils/turbo";
 import { findWorkspaceRoot } from "../utils/workspace";
@@ -38,7 +38,7 @@ export async function runBuildCommand({ args }: CommandContext) {
     await runTurboTask({ task: "build", args: rest });
   } finally {
     if (shouldCreateMarker) {
-      await removeRuntimeMarker(workspaceRoot).catch(() => {});
+      await removeRuntimeMarker(workspaceRoot).catch(() => { });
     }
   }
 }
@@ -99,5 +99,5 @@ async function writeRuntimeMarker(root: string, runtime: BuildRuntime) {
 
 async function removeRuntimeMarker(root: string) {
   const markerPath = join(root, BUILD_RUNTIME_MARKER);
-  await rm(markerPath, { force: true }).catch(() => {});
+  await rm(markerPath, { force: true }).catch(() => { });
 }

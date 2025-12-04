@@ -51,7 +51,7 @@ function buildBaseTemplateFiles(opts: ScaffoldOptions): Record<string, string> {
       bunax: DEFAULTS.bunax,
     } as Record<string, string>,
     devDependencies: {
-      "buna-dev": DEFAULTS.bunaDev,
+      "@buna/dev": DEFAULTS.bunaDev,
       "@types/react": DEFAULTS.react,
       "@types/react-dom": DEFAULTS.reactDom,
       "@types/bun": DEFAULTS.typesBun,

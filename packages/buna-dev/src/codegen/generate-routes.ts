@@ -1,6 +1,7 @@
 import type { ResolvedBunaConfig } from "bunax/core";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
-import { join, relative, dirname } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { CSS_ENTRY_PATH, FAVICON_ENTRY_PATH, ROOT_LAYOUT_ENTRY_PATH } from "./constants";
 
 const LAYOUT_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js"];
 
@@ -71,12 +72,20 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
 
   const projectRoot = process.cwd();
   const pagesDir = join(outDir, "pages");
-  const rootLayoutPath = await findLayoutFile(join(projectRoot, "src/layout"));
+  const rootLayoutPath = await findLayoutFile(join(projectRoot, ROOT_LAYOUT_ENTRY_PATH));
   const layoutCache = new Map<string, string | null>();
 
   // Absolute path to main CSS entry
-  const cssEntryPath = join(projectRoot, "src/index.css");
+  const cssEntryPath = join(projectRoot, CSS_ENTRY_PATH);
   const hasGlobalCssEntry = await fileExists(cssEntryPath);
+  const faviconPath = join(projectRoot, "public", FAVICON_ENTRY_PATH);
+  const hasFavicon = await fileExists(faviconPath);
+
+  if (!hasFavicon) {
+    console.warn(
+      '[buna codegen] Arquivo "public/favicon.ico" not found. Add it to define the route`s favicon ',
+    );
+  }
 
   await ensureDir(pagesDir);
 
@@ -129,12 +138,18 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
 
     // this is generates for workers runtime to use it in each page
     const cssTag = cssHref ? `    <link rel="stylesheet" href="${cssHref}" />\n` : "";
+    const faviconHref = hasFavicon
+      ? toRelativeAssetPath(
+        relative(dirname(htmlDiskPath), faviconPath).replace(/\\/g, "/"),
+      )
+      : null;
+    const faviconTag = faviconHref ? `    <link rel="icon" href="${faviconHref}" />\n` : "";
 
     const htmlContent = `<!DOCTYPE html>
 <html>
   <head>
     <title>${routePath}</title>
-    ${cssTag}
+    ${cssTag}${faviconTag}
   </head>
   <body data-buna-route="${routePath}">
     <div id="root"></div>

@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { spinner } from "@clack/prompts";
-import { generateRoutes } from "buna-dev";
+import { generateRoutes } from "@buna/dev";
 import { loadConfig } from "../utils/load-config";
 import type { CommandContext } from "../types";
 import { BUILD_RUNNER_TEMPLATE } from "../templates/build-runner-template";
@@ -13,7 +13,7 @@ export async function runPrepareCommand({ configFile }: CommandContext) {
   const projectRoot = process.cwd();
   const bunaDir = resolve(projectRoot, config.outDir);
 
-  await rm(bunaDir, { recursive: true, force: true }).catch(() => {});
+  await rm(bunaDir, { recursive: true, force: true }).catch(() => { });
   s.message("Generating Buna routes...");
   await generateRoutes(config);
 

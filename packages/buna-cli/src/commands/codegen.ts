@@ -1,5 +1,5 @@
 import { spinner } from "@clack/prompts";
-import { generateRoutes } from "buna-dev";
+import { generateRoutes } from "@buna/dev";
 import { loadConfig } from "../utils/load-config";
 import type { CommandContext } from "../types";
 

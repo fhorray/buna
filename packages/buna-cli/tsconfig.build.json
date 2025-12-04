@@ -7,7 +7,7 @@
     "paths": {
       "bunax": ["packages/buna/dist"],
       "bunax/*": ["packages/buna/dist/*"],
-      "buna-dev": ["packages/buna-dev/dist"],
+      "@buna/dev": ["packages/buna-dev/dist"],
       "buna-dev/*": ["packages/buna-dev/dist/*"]
     }
   },

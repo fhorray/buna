@@ -1,5 +1,5 @@
 {
-  "name": "buna-dev",
+  "name": "@buna/dev",
   "version": "0.0.1-alpha-01.5",
   "private": false,
   "type": "module",
