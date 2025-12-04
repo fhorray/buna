@@ -4,6 +4,7 @@ import { dirname, join, relative } from "node:path";
 import { CSS_ENTRY_PATH, FAVICON_ENTRY_PATH, ROOT_LAYOUT_ENTRY_PATH } from "./constants";
 
 const LAYOUT_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js"];
+const API_DIR = "src/api";
 
 async function ensureDir(path: string) {
   await mkdir(path, { recursive: true });
@@ -67,6 +68,64 @@ function filePathToRoute(pathname: string, routesDir: string): string {
   return "/" + mapped.join("/");
 }
 
+function apiFilePathToRoute(pathname: string, apiDir: string): string {
+  const rel = relative(apiDir, pathname).replace(/\\/g, "/");
+  const withoutExt = rel.replace(/\.(tsx|jsx|ts|js)$/, "");
+  const segments = withoutExt.split("/");
+
+  // Special-case root index route: src/api/index.ts -> /api
+  if (segments.length === 1 && segments[0] === "index") {
+    return "/api";
+  }
+
+  const isIndexRoute = segments[segments.length - 1] === "index";
+  const coreSegments = isIndexRoute ? segments.slice(0, -1) : segments;
+
+  const mapped = coreSegments.map(segment => {
+    if (segment.startsWith("[") && segment.endsWith("]")) {
+      const inner = segment.slice(1, -1);
+
+      // Catch-all segments like "[...slug]" -> "*"
+      if (inner.startsWith("...")) {
+        return "*";
+      }
+
+      let optional = false;
+      let nameAndPattern = inner;
+
+      // Optional parameter: "[id?]" -> ":id?"
+      if (nameAndPattern.endsWith("?")) {
+        optional = true;
+        nameAndPattern = nameAndPattern.slice(0, -1);
+      }
+
+      let paramName = nameAndPattern;
+      let pattern: string | undefined;
+
+      // Regex parameter: "[date{[0-9]+}]" -> ":date{[0-9]+}"
+      const braceIndex = nameAndPattern.indexOf("{");
+      if (braceIndex !== -1 && nameAndPattern.endsWith("}")) {
+        paramName = nameAndPattern.slice(0, braceIndex);
+        pattern = nameAndPattern.slice(braceIndex); // includes "{...}"
+      }
+
+      let result = `:${paramName}`;
+      if (pattern) result += pattern;
+      if (optional) result += "?";
+      return result;
+    }
+
+    return segment;
+  });
+
+  const base = "/api";
+  if (mapped.length === 0) {
+    return base;
+  }
+
+  return `${base}/${mapped.join("/")}`;
+}
+
 export async function generateRoutes(config: ResolvedBunaConfig) {
   const { routesDir, outDir } = config;
 
@@ -92,6 +151,8 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
   const files = await getFilesRecursively(routesDir);
 
   let imports = "";
+  let apiHelpers = "";
+  let apiRouteInit = "";
   let routesObject = "export const routes = {\n";
 
   for (const [index, file] of files.entries()) {
@@ -168,10 +229,61 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
     routesObject += `  "${routePath}": ${importVar},\n`;
   }
 
+  // API routes: map files under src/api to Bun/Hono-style route patterns
+  const apiDir = API_DIR;
+  let apiFiles: string[] = [];
+  try {
+    apiFiles = await getFilesRecursively(apiDir);
+  } catch {
+    apiFiles = [];
+  }
+
+  if (apiFiles.length > 0) {
+    apiHelpers = `
+function __bunaToApiRoute(mod: any): any {
+  if (mod && (typeof mod.default === "function" || typeof mod.default === "object")) {
+    return mod.default as any;
+  }
+
+  const route: Record<string, any> = {};
+  const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"] as const;
+
+  for (const method of METHODS) {
+    const handler = (mod as any)[method];
+    if (typeof handler === "function") {
+      (route as any)[method] = handler;
+    }
+  }
+
+  return route;
+}
+`;
+  }
+
+  for (const [index, file] of apiFiles.entries()) {
+    const routePath = apiFilePathToRoute(file, apiDir);
+
+    // Import path for the API module relative to the generated routes file (.buna/)
+    const importRelPath =
+      relative(outDir, file)
+        .replace(/\\/g, "/")
+        .replace(/\.(tsx|jsx|ts|js)$/, "");
+
+    const nsImportVar = `Api_${index}_ns`;
+    const apiVar = `Api_${index}`;
+    const importPathForTs = toRelativeAssetPath(importRelPath);
+
+    imports += `import * as ${nsImportVar} from "${importPathForTs}";\n`;
+    apiRouteInit += `const ${apiVar} = __bunaToApiRoute(${nsImportVar});\n`;
+    routesObject += `  "${routePath}": ${apiVar},\n`;
+  }
+
   routesObject += "};\n";
 
   const tsContent = `// AUTO-GENERATED. DO NOT EDIT.
 ${imports}
+${apiHelpers}
+${apiRouteInit}
 ${routesObject}
 `;
 

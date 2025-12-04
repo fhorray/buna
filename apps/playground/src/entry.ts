@@ -1,7 +1,10 @@
 import { serve } from "bun";
 import { routes } from "#buna/routes.generated";
 import { handleRequest } from "bunax/runtime";
-import config from "@/buna.config"
+import { withDevtools } from "@buna/devtools";
+import config from "@/buna.config";
+
+const devHandleRequest = withDevtools(handleRequest);
 
 const server = serve({
   routes,
@@ -15,7 +18,7 @@ const server = serve({
   fetch(req, server) {
     const env: any = {};
     const ctx = { waitUntil: (_p: Promise<any>) => { } };
-    return handleRequest(req, env, ctx, config);
+    return devHandleRequest(req, env, ctx, config);
   },
 });
 

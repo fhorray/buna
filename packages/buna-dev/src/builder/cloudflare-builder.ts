@@ -17,6 +17,12 @@ type HtmlRouteRecord = {
   regex: string | null;
 };
 
+type ApiRouteRecord = {
+  pattern: string;
+  importPath: string;
+  identifier: string;
+};
+
 type BuildLog = {
   message: string;
   location?: {
@@ -29,6 +35,7 @@ type BuildLog = {
 const DEFAULT_ASSET_PREFIX = "/_buna/assets";
 const DEFAULT_HTML_CACHE = "public, max-age=60";
 const DEFAULT_STATIC_CACHE = "public, max-age=31536000, immutable";
+const API_DIR = "src/api";
 
 export interface CloudflareBuildOptions {
   config: ResolvedBunaConfig;
@@ -125,11 +132,27 @@ export async function buildCloudflareWorker(options: CloudflareBuildOptions): Pr
     });
   }
 
+  const apiBaseDir = resolve(projectRoot, API_DIR);
+  const apiFiles = await collectApiFiles(apiBaseDir);
+  const apiRoutes: ApiRouteRecord[] = apiFiles.map((file, index) => {
+    const pattern = apiFilePathToRoute(file, apiBaseDir);
+    const relImport = relative(resolvedOutDir, file)
+      .replace(/\\/g, "/")
+      .replace(/\.(tsx|jsx|ts|js)$/, "");
+    const importPath = relImport.startsWith(".") ? relImport : `./${relImport}`;
+    return {
+      pattern,
+      importPath,
+      identifier: `Api_${index}`,
+    };
+  });
+
   const workerSource = createWorkerSource({
     routes,
     htmlCacheControl,
     assetCacheControl,
     assetsBasePath: ctx.assetsBasePath,
+    apiRoutes,
   });
 
   const workerPath = join(resolvedOutDir, "worker.js");
@@ -175,6 +198,27 @@ async function collectHtmlFiles(dir: string): Promise<string[]> {
   return files;
 }
 
+async function collectApiFiles(dir: string): Promise<string[]> {
+  const files: string[] = [];
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...(await collectApiFiles(full)));
+      } else if (entry.isFile() && /\.(tsx|ts|jsx|js)$/.test(entry.name)) {
+        files.push(full);
+      }
+    }
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+    throw err;
+  }
+  return files;
+}
+
 function extractRoutePattern(html: string): string | null {
   const match = html.match(/data-buna-route="([^"]+)"/);
   return match ? match[1] : null;
@@ -207,6 +251,64 @@ function inferRouteFromFile(filePath: string, pagesDir: string): string {
   }
 
   return `/${normalizedSegments.join("/")}`;
+}
+
+function apiFilePathToRoute(pathname: string, apiDir: string): string {
+  const rel = relative(apiDir, pathname).replace(/\\/g, "/");
+  const withoutExt = rel.replace(/\.(tsx|jsx|ts|js)$/, "");
+  const segments = withoutExt.split("/");
+
+  // Special-case root index route: src/api/index.ts -> /api
+  if (segments.length === 1 && segments[0] === "index") {
+    return "/api";
+  }
+
+  const isIndexRoute = segments[segments.length - 1] === "index";
+  const coreSegments = isIndexRoute ? segments.slice(0, -1) : segments;
+
+  const mapped = coreSegments.map(segment => {
+    if (segment.startsWith("[") && segment.endsWith("]")) {
+      const inner = segment.slice(1, -1);
+
+      // Catch-all segments like "[...slug]" -> "*"
+      if (inner.startsWith("...")) {
+        return "*";
+      }
+
+      let optional = false;
+      let nameAndPattern = inner;
+
+      // Optional parameter: "[id?]" -> ":id?"
+      if (nameAndPattern.endsWith("?")) {
+        optional = true;
+        nameAndPattern = nameAndPattern.slice(0, -1);
+      }
+
+      let paramName = nameAndPattern;
+      let pattern: string | undefined;
+
+      // Regex parameter: "[date{[0-9]+}]" -> ":date{[0-9]+}"
+      const braceIndex = nameAndPattern.indexOf("{");
+      if (braceIndex !== -1 && nameAndPattern.endsWith("}")) {
+        paramName = nameAndPattern.slice(0, braceIndex);
+        pattern = nameAndPattern.slice(braceIndex); // includes "{...}"
+      }
+
+      let result = `:${paramName}`;
+      if (pattern) result += pattern;
+      if (optional) result += "?";
+      return result;
+    }
+
+    return segment;
+  });
+
+  const base = "/api";
+  if (mapped.length === 0) {
+    return base;
+  }
+
+  return `${base}/${mapped.join("/")}`;
 }
 
 async function transformHtmlFile(filePath: string, html: string, ctx: TransformContext): Promise<string> {
@@ -719,7 +821,158 @@ function createWorkerSource(params: {
   htmlCacheControl: string;
   assetCacheControl: string;
   assetsBasePath: string;
+  apiRoutes: ApiRouteRecord[];
 }): string {
+  const apiImports = params.apiRoutes
+    .map(route => `import * as ${route.identifier} from "${route.importPath}";`)
+    .join("\n");
+
+  const apiRouteEntries = params.apiRoutes
+    .map(
+      route =>
+        `{ pattern: ${JSON.stringify(route.pattern)}, module: normalizeApiModule(${route.identifier}) }`,
+    )
+    .join(",\n  ");
+
+  const apiSection =
+    params.apiRoutes.length > 0
+      ? `
+${apiImports}
+
+function normalizeApiModule(mod) {
+  if (mod && (typeof mod.default === "function" || typeof mod.default === "object")) {
+    return mod.default;
+  }
+
+  const route = {};
+  const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"];
+
+  for (const method of METHODS) {
+    const handler = mod[method];
+    if (typeof handler === "function") {
+      route[method] = handler;
+    }
+  }
+
+  return route;
+}
+
+const API_ROUTES = [
+  ${apiRouteEntries}
+];
+
+function matchApiRoute(pathname, method) {
+  if (!pathname.startsWith("/api")) {
+    return null;
+  }
+
+  for (const route of API_ROUTES) {
+    const params = matchPatternWithParams(route.pattern, pathname);
+    if (!params) continue;
+
+    const handler = route.module[method];
+    if (typeof handler !== "function") continue;
+
+    return { handler, params };
+  }
+
+  return null;
+}
+
+function matchPatternWithParams(pattern, pathname) {
+  if (!pattern) {
+    return null;
+  }
+
+  if (pattern === pathname) {
+    return {};
+  }
+
+  const patternSegments = pattern.split("/").filter(Boolean);
+  const pathSegments = pathname.split("/").filter(Boolean);
+
+  const params = {};
+  let i = 0;
+  let j = 0;
+
+  while (i < patternSegments.length && j < pathSegments.length) {
+    const p = patternSegments[i];
+    const s = pathSegments[j];
+
+    if (p === "*") {
+      params["*"] = pathSegments.slice(j).join("/");
+      return params;
+    }
+
+    if (p.startsWith(":")) {
+      let token = p.slice(1);
+      let optional = false;
+
+      if (token.endsWith("?")) {
+        optional = true;
+        token = token.slice(0, -1);
+      }
+
+      let name = token;
+      let patternSource = null;
+      const braceIndex = token.indexOf("{");
+      if (braceIndex !== -1 && token.endsWith("}")) {
+        name = token.slice(0, braceIndex);
+        patternSource = token.slice(braceIndex + 1, -1);
+      }
+
+      if (patternSource) {
+        const re = new RegExp(patternSource);
+        if (!re.test(s)) {
+          return null;
+        }
+      }
+
+      params[name] = s;
+      i++;
+      j++;
+      continue;
+    }
+
+    if (p !== s) {
+      return null;
+    }
+
+    i++;
+    j++;
+  }
+
+  while (i < patternSegments.length) {
+    const p = patternSegments[i];
+    if (p === "*") {
+      params["*"] = "";
+      i++;
+      continue;
+    }
+    if (p.startsWith(":") && p.endsWith("?")) {
+      i++;
+      continue;
+    }
+    return null;
+  }
+
+  if (j < pathSegments.length) {
+    return null;
+  }
+
+  return params;
+}
+`
+      : `
+const API_ROUTES = [];
+function matchApiRoute() {
+  return null;
+}
+function matchPatternWithParams() {
+  return null;
+}
+`;
+
   const routeEntries = params.routes
     .map((route) => {
       const matcher = route.regex ? `new RegExp(${JSON.stringify(route.regex)})` : "null";
@@ -728,6 +981,7 @@ function createWorkerSource(params: {
     .join(",\n  ");
 
   return `// GENERATED BY buna cloudflare builder
+${apiSection}
 const HTML_ROUTES = [
   ${routeEntries}
 ];
@@ -804,6 +1058,14 @@ export default {
     const assetResponse = await maybeServeBoundAsset(request, env);
     if (assetResponse) {
       return assetResponse;
+    }
+
+    const apiMatch = matchApiRoute(normalized, request.method.toUpperCase());
+    if (apiMatch) {
+      const { handler, params } = apiMatch;
+      const apiRequest = new Request(request);
+      apiRequest.params = params;
+      return handler(apiRequest);
     }
 
     const route = matchHtmlRoute(normalized);

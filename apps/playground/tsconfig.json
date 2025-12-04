@@ -10,8 +10,12 @@
       "@public/*": ["./public/*"],
 
       "#buna/*": [".buna/*"],
-      "bunax": [".buna/runtime/index.js"],
-      "bunax/*": [".buna/runtime/*"]
+
+      "bunax": ["../../packages/buna/src/index.ts"],
+      "bunax/*": ["../../packages/buna/src/*"],
+
+      "bunax/runtime": [".buna/runtime/index.js"],
+      "bunax/runtime/*": [".buna/runtime/*"]
     }
   },
   "include": [

@@ -34,9 +34,13 @@ function buildBaseTemplateFiles(opts: ScaffoldOptions): Record<string, string> {
     scripts: {
       "buna:prepare": "buna prepare --config buna.config.ts",
       dev: "bun run buna:prepare && bun --hot src/entry.ts",
-      build:
-        "bun run buna:prepare && bun run .buna/build.ts" +
-        (isCloudflare ? " --runtime cloudflare" : ""),
+      build: "bun run buna:prepare && bun run .buna/build.ts",
+      ...(isCloudflare
+        ? {
+          "deploy:cf":
+            "NODE_ENV=production bun run build --runtime cloudflare && wrangler deploy",
+        }
+        : {}),
       "check-types": "tsc --noEmit",
     },
     catalog: {
@@ -52,10 +56,11 @@ function buildBaseTemplateFiles(opts: ScaffoldOptions): Record<string, string> {
     } as Record<string, string>,
     devDependencies: {
       "@buna/dev": DEFAULTS.bunaDev,
-      "@types/react": DEFAULTS.react,
-      "@types/react-dom": DEFAULTS.reactDom,
+      "@buna/devtools": "latest",
+      "@types/react": DEFAULTS.typesReact,
+      "@types/react-dom": DEFAULTS.typesReactDom,
       "@types/bun": DEFAULTS.typesBun,
-      "@cloudflare/workers-types": DEFAULTS.typesWorkers
+      "@cloudflare/workers-types": DEFAULTS.typesWorkers,
     } as Record<string, string>,
   };
 
@@ -71,14 +76,17 @@ function buildBaseTemplateFiles(opts: ScaffoldOptions): Record<string, string> {
     "jsx": "react-jsx",
     "strict": true,
     "lib": ["ESNext", "DOM"],
+    "types": ["@cloudflare/workers-types"],
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
       "@public/*": ["./public/*"],
+
       "#buna/*": [".buna/*"],
-      "bunax": [".buna/runtime/index.js"],
-      "bunax/*": [".buna/runtime/*"]
+
+      "bunax/runtime": [".buna/runtime/index.js"],
+      "bunax/runtime/*": [".buna/runtime/*"]
     }
   },
   "include": ["src", ".buna", "buna.config.ts", "types", "bun-env.d.ts"],
@@ -110,18 +118,24 @@ export default defineConfig({
   const entryTs = `import { serve } from "bun";
 import { routes } from "#buna/routes.generated";
 import { handleRequest } from "bunax/runtime";
+import { withDevtools } from "@buna/devtools";
 import config from "@/buna.config";
+
+const devHandleRequest = withDevtools(handleRequest);
 
 const server = serve({
   routes,
   development: process.env.NODE_ENV !== "production" && {
+    // Enable browser hot reloading in development
     hmr: true,
+
+    // Echo console logs from the browser to the server
     console: true,
   },
   fetch(req) {
     const env: any = {};
     const ctx = { waitUntil: (_p: Promise<any>) => {} };
-    return handleRequest(req, env, ctx, config);
+    return devHandleRequest(req, env, ctx, config);
   },
 });
 
@@ -130,9 +144,15 @@ console.log(\`🚀 Server running at \${server.url}\`);
 
   const layoutTsx = `import "./index.css";
 import React from "react";
+import { DevtoolsPanel } from "@buna/devtools";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <DevtoolsPanel />
+    </>
+  );
 };
 
 export default Layout;
@@ -202,23 +222,45 @@ env = "BUN_PUBLIC_*"
 server = "src/entry.ts"
 `;
 
-  const gitignore = `node_modules
-dist
+  const gitignore = `# dependencies (bun install)
+node_modules
+
+# build output
 out
+dist
 *.tgz
+
+# code coverage
 coverage
 *.lcov
+
+# logs
 logs
 _.log
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv environment variable files
 .env
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
 .eslintcache
 .cache
 *.tsbuildinfo
+
+# IntelliJ based IDEs
 .idea
+
+# Finder (MacOS) folder config
 .DS_Store
+
+# Buna artifacts
 .buna
+
+# Cloudflare Wrangler config
 .wrangler
 `;
 
@@ -249,7 +291,8 @@ Then open http://localhost:3000 and edit \`src/routes/index.tsx\`.
 
 
   const wrangler = isCloudflare
-    ? `{
+    ? `// Cloudflare Worker configuration for Buna
+{
   "name": "${opts.name}",
   "main": ".buna/cloudflare/worker.js",
   "compatibility_date": "2024-05-01",
