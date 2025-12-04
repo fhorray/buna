@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "lib": ["ESNext", "DOM"],
+    "types": ["@cloudflare/workers-types"],
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {

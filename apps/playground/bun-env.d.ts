@@ -15,3 +15,16 @@ declare module "*.module.css" {
   const classes: { readonly [key: string]: string };
   export = classes;
 }
+
+
+import type { Fetcher } from "@cloudflare/workers-types";
+
+declare global {
+  interface BunaCloudflareWorkerEnv {
+    ASSETS: Fetcher;
+    MY_BINDING: MyBindingType;
+    // add whatever bindings you actually provide in your wrangler/manifest
+  }
+}
+
+export { };

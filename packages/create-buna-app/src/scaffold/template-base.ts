@@ -55,6 +55,7 @@ function buildBaseTemplateFiles(opts: ScaffoldOptions): Record<string, string> {
       "@types/react": DEFAULTS.react,
       "@types/react-dom": DEFAULTS.reactDom,
       "@types/bun": DEFAULTS.typesBun,
+      "@cloudflare/workers-types": DEFAULTS.typesWorkers
     } as Record<string, string>,
   };
 

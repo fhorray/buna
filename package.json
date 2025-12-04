@@ -7,7 +7,7 @@
   "packageManager": "bun@1.2.0",
   "catalog": {
     "react": "19.2.1",
-    "react-dom": "19.2.3"
+    "react-dom": "^19.2.1"
   },
   "workspaces": [
     "packages/*",
@@ -27,13 +27,17 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "turbo": "^2.6.1"
+    "turbo": "^2.6.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
     "bunax": "^0.0.1-alpha-01",
-    "buna-cli": "^0.0.1-alpha-01"
+    "buna-cli": "^0.0.1-alpha-01",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   }
 }

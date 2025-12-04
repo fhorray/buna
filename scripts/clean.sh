@@ -42,7 +42,7 @@ GRAY="\033[90m"
 
 SCRIPT_NAME=$(basename "$0")
 
-KNOWN_TARGETS=("node_modules" "dist" ".turbo" ".buna")
+KNOWN_TARGETS=("node_modules" "dist" ".turbo" ".buna" ".wrangler")
 
 YES=0
 DRY_RUN=0

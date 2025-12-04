@@ -8,5 +8,6 @@ export const DEFAULTS = {
   bunaDev: "latest",
   typesReact: "latest",
   typesReactDom: "latest",
-  typesBun: "latest"
+  typesBun: "latest",
+  typesWorkers: "latest"
 } as const;
