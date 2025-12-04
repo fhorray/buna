@@ -1,4 +1,4 @@
-import { createRoute, type RouteContext } from 'buna';
+import { createRoute, type RouteContext } from 'bunax';
 import { useState } from 'react';
 import logoUrl from '@public/logo.svg';
 

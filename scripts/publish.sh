@@ -21,6 +21,7 @@ if ! command -v fzf >/dev/null 2>&1; then
   echo -e "${RED}✖${RESET} ${BOLD}fzf is not installed${RESET}"
   echo -e "   ${GRAY}Install fzf to use interactive selection with arrows and space.${RESET}"
   echo -e "   ${GRAY}Example (macOS):${RESET} brew install fzf"
+  echo -e "   ${GRAY}Example (Windows):${RESET} choco install fzf"
   exit 1
 fi
 

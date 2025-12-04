@@ -7,7 +7,7 @@
   "packageManager": "bun@1.2.0",
   "catalog": {
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.3"
   },
   "workspaces": [
     "packages/*",
@@ -19,6 +19,7 @@
     "wklink": "bash scripts/link.sh",
     "wkunlink": "bash scripts/unlink.sh",
     "wkpublish": "bash scripts/publish.sh",
+    "wkclean": "bash scripts/clean.sh",
     "codegen": "buna codegen",
     "dev": "buna dev",
     "build": "buna build",
@@ -32,8 +33,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@types/blessed": "^0.1.26",
-    "bunax": "^0.0.1-alpha-01.0",
-    "buna-cli": "^0.0.1-alpha-01.0"
+    "bunax": "^0.0.1-alpha-01",
+    "buna-cli": "^0.0.1-alpha-01"
   }
 }

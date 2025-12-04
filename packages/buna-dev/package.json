@@ -1,6 +1,6 @@
 {
   "name": "buna-dev",
-  "version": "0.0.1-alpha-01.4",
+  "version": "0.0.1-alpha-01.5",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -40,10 +40,10 @@
     "@types/bun": "latest",
     "@types/node": "^24.10.1",
     "typescript": "^5.0.0",
-    "bunax": "^0.0.1-alpha-01.0"
+    "bunax": "^0.0.1-alpha-01"
   },
   "peerDependencies": {
     "bun": "^1.2.0",
-    "bunax": "^0.0.1-alpha-01.0"
+    "bunax": "^0.0.1-alpha-01"
   }
 }

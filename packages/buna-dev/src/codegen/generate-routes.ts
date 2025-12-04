@@ -123,17 +123,19 @@ export async function generateRoutes(config: ResolvedBunaConfig) {
     // 4. css href relative to HTML (dynamic)
     const cssHref = hasGlobalCssEntry
       ? toRelativeAssetPath(
-          relative(dirname(htmlDiskPath), cssEntryPath).replace(/\\/g, "/"),
-        )
+        relative(dirname(htmlDiskPath), cssEntryPath).replace(/\\/g, "/"),
+      )
       : null;
 
+    // this is generates for workers runtime to use it in each page
     const cssTag = cssHref ? `    <link rel="stylesheet" href="${cssHref}" />\n` : "";
 
     const htmlContent = `<!DOCTYPE html>
 <html>
   <head>
     <title>${routePath}</title>
-${cssTag}  </head>
+    ${cssTag}
+  </head>
   <body data-buna-route="${routePath}">
     <div id="root"></div>
     <script type="module" src="${scriptSrc}"></script>

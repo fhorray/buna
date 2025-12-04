@@ -1,6 +1,6 @@
 {
   "name": "bunax",
-  "version": "0.0.1-alpha-01.3",
+  "version": "0.0.2-alpha-01.0",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -43,8 +43,8 @@
     "check-types": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "19.2.1",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@types/bun": "latest",
